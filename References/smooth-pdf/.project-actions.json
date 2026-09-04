@@ -1,0 +1,22 @@
+{
+  "actions": [
+    {
+      "text": "$(run) Run",
+      "command": "npm start",
+      "description": "Run the application",
+      "color": "#ccffff"
+    },
+    {
+      "text": "$(run) Build EXE (Installer)",
+      "command": "npm run build:installer",
+      "description": "Build EXE (Installer)",
+      "color": "#ffffcc"
+    },
+    {
+      "text": "$(run) Build EXE (Portable)",
+      "command": "npm run build:portable",
+      "description": "Build EXE (Portable)",
+      "color": "#ccffcc"
+    }
+  ]
+}

@@ -1,0 +1,3200 @@
+/* Copyright 2014 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.messageBar{
+  --closing-button-icon:url("images/messageBar_closingButton.svg");
+  --message-bar-close-button-color:var(--text-primary-color);
+  --message-bar-close-button-color-hover:var(--text-primary-color);
+  --message-bar-close-button-border-radius:4px;
+  --message-bar-close-button-border:none;
+  --message-bar-close-button-hover-bg-color:rgb(21 20 26 / 14%);
+  --message-bar-close-button-active-bg-color:rgb(21 20 26 / 21%);
+  --message-bar-close-button-focus-bg-color:rgb(21 20 26 / 7%);
+}
+
+@media (prefers-color-scheme: dark){
+.messageBar{
+    --message-bar-close-button-hover-bg-color:rgb(251 251 254 / 14%);
+    --message-bar-close-button-active-bg-color:rgb(251 251 254 / 21%);
+    --message-bar-close-button-focus-bg-color:rgb(251 251 254 / 7%);
+}
+  }
+
+@media screen and (forced-colors: active){
+.messageBar{
+    --message-bar-close-button-color:ButtonText;
+    --message-bar-close-button-border:1px solid ButtonText;
+    --message-bar-close-button-hover-bg-color:ButtonText;
+    --message-bar-close-button-active-bg-color:ButtonText;
+    --message-bar-close-button-focus-bg-color:ButtonText;
+    --message-bar-close-button-color-hover:HighlightText;
+}
+  }
+
+.messageBar{
+  align-items:center;
+  background:var(--message-bar-bg-color);
+  border:1px solid var(--message-bar-border-color);
+  border-radius:4px;
+  color:var(--message-bar-fg-color);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  justify-content:center;
+  padding:8px 8px 8px 16px;
+  position:relative;
+  user-select:none;
+     user-select:none;
+          user-select:none;
+}
+
+.messageBar  > div{
+    align-items:flex-start;
+    align-self:stretch;
+    display:flex;
+    gap:8px;
+  }
+
+:is(.messageBar > div)::before{
+      background-color:var(--message-bar-icon-color);
+      content:"";
+      display:inline-block;
+      flex-shrink:0;
+      height:16px;
+      mask-image:var(--message-bar-icon);
+              mask-image:var(--message-bar-icon);
+      mask-size:cover;
+              mask-size:cover;
+      width:16px;
+    }
+
+.messageBar button{
+    cursor:pointer;
+  }
+
+:is(.messageBar button):focus-visible{
+      outline:var(--focus-ring-outline);
+      outline-offset:2px;
+    }
+
+.messageBar .closeButton{
+    align-items:center;
+    background:none;
+    border:var(--message-bar-close-button-border);
+    border-radius:var(--message-bar-close-button-border-radius);
+    display:flex;
+    height:32px;
+    justify-content:center;
+    width:32px;
+  }
+
+:is(.messageBar .closeButton)::before{
+      background-color:var(--message-bar-close-button-color);
+      content:"";
+      display:inline-block;
+      height:16px;
+      mask-image:var(--closing-button-icon);
+              mask-image:var(--closing-button-icon);
+      mask-size:cover;
+              mask-size:cover;
+      width:16px;
+    }
+
+:is(.messageBar .closeButton):is(:hover,:active,:focus)::before{
+      background-color:var(--message-bar-close-button-color-hover);
+    }
+
+:is(.messageBar .closeButton):hover{
+      background-color:var(--message-bar-close-button-hover-bg-color);
+    }
+
+:is(.messageBar .closeButton):active{
+      background-color:var(--message-bar-close-button-active-bg-color);
+    }
+
+:is(.messageBar .closeButton):focus{
+      background-color:var(--message-bar-close-button-focus-bg-color);
+    }
+
+:is(.messageBar .closeButton)  > span{
+      display:inline-block;
+      height:0;
+      overflow:hidden;
+      width:0;
+    }
+
+#editorUndoBar{
+  --text-primary-color:#15141a;
+  --message-bar-icon:url("images/secondaryToolbarButton-documentProperties.svg");
+  --message-bar-icon-color:#0060df;
+  --message-bar-bg-color:#deeafc;
+  --message-bar-fg-color:var(--text-primary-color);
+  --message-bar-border-color:rgb(0 0 0 / 8%);
+  --undo-button-bg-color:rgb(21 20 26 / 7%);
+  --undo-button-bg-color-hover:rgb(21 20 26 / 14%);
+  --undo-button-bg-color-active:rgb(21 20 26 / 21%);
+  --undo-button-fg-color:var(--message-bar-fg-color);
+  --undo-button-fg-color-hover:var(--undo-button-fg-color);
+  --undo-button-fg-color-active:var(--undo-button-fg-color);
+  --focus-ring-color:#0060df;
+  --focus-ring-outline:2px solid var(--focus-ring-color);
+}
+
+@media (prefers-color-scheme: dark){
+#editorUndoBar{
+    --text-primary-color:#fbfbfe;
+    --message-bar-icon-color:#73a7f3;
+    --message-bar-bg-color:#003070;
+    --message-bar-border-color:rgb(255 255 255 / 8%);
+    --undo-button-bg-color:rgb(255 255 255 / 8%);
+    --undo-button-bg-color-hover:rgb(255 255 255 / 14%);
+    --undo-button-bg-color-active:rgb(255 255 255 / 21%);
+}
+  }
+
+@media screen and (forced-colors: active){
+#editorUndoBar{
+    --text-primary-color:CanvasText;
+    --message-bar-icon-color:CanvasText;
+    --message-bar-bg-color:Canvas;
+    --message-bar-border-color:CanvasText;
+    --undo-button-bg-color:ButtonText;
+    --undo-button-bg-color-hover:SelectedItem;
+    --undo-button-bg-color-active:SelectedItem;
+    --undo-button-fg-color:ButtonFace;
+    --undo-button-fg-color-hover:SelectedItemText;
+    --undo-button-fg-color-active:SelectedItemText;
+    --focus-ring-color:CanvasText;
+}
+  }
+
+#editorUndoBar{
+  cursor:default;
+  font:menu;
+  font-size:15px;
+  left:50%;
+  padding-block:8px;
+  padding-inline:16px 8px;
+  position:fixed;
+  top:50px;
+  transform:translateX(-50%);
+  z-index:10;
+}
+
+#editorUndoBar button{
+    cursor:pointer;
+  }
+
+#editorUndoBar #editorUndoBarUndoButton{
+    background-color:var(--undo-button-bg-color);
+    border:none;
+    border-radius:4px;
+    color:var(--undo-button-fg-color);
+    font-weight:590;
+    height:32px;
+    line-height:19.5px;
+    margin-inline-start:8px;
+    padding:4px 16px;
+  }
+
+:is(#editorUndoBar #editorUndoBarUndoButton):hover{
+      background-color:var(--undo-button-bg-color-hover);
+      color:var(--undo-button-fg-color-hover);
+    }
+
+:is(#editorUndoBar #editorUndoBarUndoButton):active{
+      background-color:var(--undo-button-bg-color-active);
+      color:var(--undo-button-fg-color-active);
+    }
+
+#editorUndoBar  > div{
+    align-items:center;
+  }
+
+.dialog{
+  --dialog-bg-color:white;
+  --dialog-border-color:white;
+  --dialog-shadow:0 2px 14px 0 rgb(58 57 68 / 20%);
+  --text-primary-color:#15141a;
+  --text-secondary-color:#5b5b66;
+  --hover-filter:brightness(0.9);
+  --focus-ring-color:#0060df;
+  --focus-ring-outline:2px solid var(--focus-ring-color);
+  --link-fg-color:#0060df;
+  --link-hover-fg-color:#0250bb;
+  --separator-color:#f0f0f4;
+  --textarea-border-color:#8f8f9d;
+  --textarea-bg-color:white;
+  --textarea-fg-color:var(--text-secondary-color);
+  --radio-bg-color:#f0f0f4;
+  --radio-checked-bg-color:#fbfbfe;
+  --radio-border-color:#8f8f9d;
+  --radio-checked-border-color:#0060df;
+  --button-secondary-bg-color:#f0f0f4;
+  --button-secondary-fg-color:var(--text-primary-color);
+  --button-secondary-border-color:var(--button-secondary-bg-color);
+  --button-secondary-hover-bg-color:var(--button-secondary-bg-color);
+  --button-secondary-hover-fg-color:var(--button-secondary-fg-color);
+  --button-secondary-hover-border-color:var(--button-secondary-hover-bg-color);
+  --button-primary-bg-color:#0060df;
+  --button-primary-fg-color:#fbfbfe;
+  --button-primary-border-color:var(--button-primary-bg-color);
+  --button-primary-hover-bg-color:var(--button-primary-bg-color);
+  --button-primary-hover-fg-color:var(--button-primary-fg-color);
+  --button-primary-hover-border-color:var(--button-primary-hover-bg-color);
+}
+
+@media (prefers-color-scheme: dark){
+.dialog{
+    --dialog-bg-color:#1c1b22;
+    --dialog-border-color:#1c1b22;
+    --dialog-shadow:0 2px 14px 0 #15141a;
+    --text-primary-color:#fbfbfe;
+    --text-secondary-color:#cfcfd8;
+    --focus-ring-color:#0df;
+    --hover-filter:brightness(1.4);
+    --link-fg-color:#0df;
+    --link-hover-fg-color:#80ebff;
+    --separator-color:#52525e;
+    --textarea-bg-color:#42414d;
+    --radio-bg-color:#2b2a33;
+    --radio-checked-bg-color:#15141a;
+    --radio-checked-border-color:#0df;
+    --button-secondary-bg-color:#2b2a33;
+    --button-primary-bg-color:#0df;
+    --button-primary-fg-color:#15141a;
+}
+  }
+
+@media screen and (forced-colors: active){
+.dialog{
+    --dialog-bg-color:Canvas;
+    --dialog-border-color:CanvasText;
+    --dialog-shadow:none;
+    --text-primary-color:CanvasText;
+    --text-secondary-color:CanvasText;
+    --hover-filter:none;
+    --focus-ring-color:ButtonBorder;
+    --link-fg-color:LinkText;
+    --link-hover-fg-color:LinkText;
+    --separator-color:CanvasText;
+    --textarea-border-color:ButtonBorder;
+    --textarea-bg-color:Field;
+    --textarea-fg-color:ButtonText;
+    --radio-bg-color:ButtonFace;
+    --radio-checked-bg-color:ButtonFace;
+    --radio-border-color:ButtonText;
+    --radio-checked-border-color:ButtonText;
+    --button-secondary-bg-color:ButtonFace;
+    --button-secondary-fg-color:ButtonText;
+    --button-secondary-border-color:ButtonText;
+    --button-secondary-hover-bg-color:AccentColor;
+    --button-secondary-hover-fg-color:AccentColorText;
+    --button-primary-bg-color:ButtonText;
+    --button-primary-fg-color:ButtonFace;
+    --button-primary-hover-bg-color:AccentColor;
+    --button-primary-hover-fg-color:AccentColorText;
+}
+  }
+
+.dialog{
+  background:var(--dialog-bg-color);
+  border:1px solid var(--dialog-border-color);
+  border-radius:4px;
+  box-shadow:var(--dialog-shadow);
+  color:var(--text-primary-color);
+  font:message-box;
+  font-size:13px;
+  font-weight:400;
+  line-height:150%;
+  padding:12px 16px;
+}
+
+:is(.dialog .mainContainer) *:focus-visible{
+      outline:var(--focus-ring-outline);
+      outline-offset:2px;
+    }
+
+:is(.dialog .mainContainer) .title{
+      align-items:flex-start;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      justify-content:flex-end;
+      width:auto;
+    }
+
+:is(:is(.dialog .mainContainer) .title)  > span{
+        font-size:13px;
+        font-style:normal;
+        font-weight:590;
+        line-height:150%;
+      }
+
+:is(.dialog .mainContainer) .dialogSeparator{
+      border-bottom:none;
+      border-top:1px solid var(--separator-color);
+      height:0;
+      margin-block:4px;
+      width:100%;
+    }
+
+:is(.dialog .mainContainer) .dialogButtonsGroup{
+      align-self:flex-end;
+      display:flex;
+      gap:12px;
+    }
+
+:is(.dialog .mainContainer) .radio{
+      align-items:flex-start;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+:is(:is(.dialog .mainContainer) .radio)  > .radioButton{
+        align-items:center;
+        align-self:stretch;
+        display:flex;
+        gap:8px;
+      }
+
+:is(:is(:is(.dialog .mainContainer) .radio) > .radioButton) input{
+          appearance:none;
+             appearance:none;
+                  appearance:none;
+          background-color:var(--radio-bg-color);
+          border:1px solid var(--radio-border-color);
+          border-radius:50%;
+          box-sizing:border-box;
+          height:16px;
+          width:16px;
+        }
+
+:is(:is(:is(:is(.dialog .mainContainer) .radio) > .radioButton) input):hover{
+            filter:var(--hover-filter);
+          }
+
+:is(:is(:is(:is(.dialog .mainContainer) .radio) > .radioButton) input):checked{
+            background-color:var(--radio-checked-bg-color);
+            border:4px solid var(--radio-checked-border-color);
+          }
+
+:is(:is(.dialog .mainContainer) .radio)  > .radioLabel{
+        align-items:flex-start;
+        align-self:stretch;
+        display:flex;
+        gap:10px;
+        padding-inline-start:24px;
+      }
+
+:is(:is(:is(.dialog .mainContainer) .radio) > .radioLabel)  > span{
+          color:var(--text-secondary-color);
+          flex:1 0 0;
+          font-size:11px;
+        }
+
+:is(.dialog .mainContainer) button:not(:is(.toggle-button,.closeButton)){
+      border:1px solid;
+      border-radius:4px;
+      font:menu;
+      font-weight:600;
+      height:32px;
+      padding:4px 16px;
+      width:auto;
+    }
+
+:is(:is(.dialog .mainContainer) button:not(:is(.toggle-button,.closeButton))):hover{
+        cursor:pointer;
+        filter:var(--hover-filter);
+      }
+
+.secondaryButton:is(:is(.dialog .mainContainer) button:not(:is(.toggle-button,.closeButton))){
+        background-color:var(--button-secondary-bg-color);
+        border-color:var(--button-secondary-border-color);
+        color:var(--button-secondary-fg-color);
+      }
+
+.secondaryButton:is(:is(.dialog .mainContainer) button:not(:is(.toggle-button,.closeButton))):hover{
+          background-color:var(--button-secondary-hover-bg-color);
+          border-color:var(--button-secondary-hover-border-color);
+          color:var(--button-secondary-hover-fg-color);
+        }
+
+.primaryButton:is(:is(.dialog .mainContainer) button:not(:is(.toggle-button,.closeButton))){
+        background-color:var(--button-primary-bg-color);
+        border-color:var(--button-primary-border-color);
+        color:var(--button-primary-fg-color);
+        opacity:1;
+      }
+
+.primaryButton:is(:is(.dialog .mainContainer) button:not(:is(.toggle-button,.closeButton))):hover{
+          background-color:var(--button-primary-hover-bg-color);
+          border-color:var(--button-primary-hover-border-color);
+          color:var(--button-primary-hover-fg-color);
+        }
+
+:is(.dialog .mainContainer) a{
+      color:var(--link-fg-color);
+    }
+
+:is(:is(.dialog .mainContainer) a):hover{
+        color:var(--link-hover-fg-color);
+      }
+
+:is(.dialog .mainContainer) textarea{
+      background:var(--textarea-bg-color);
+      border:1px solid var(--textarea-border-color);
+      border-radius:4px;
+      box-sizing:border-box;
+      color:var(--textarea-fg-color);
+      font:inherit;
+      margin:0;
+      padding:8px;
+      resize:none;
+    }
+
+:is(:is(.dialog .mainContainer) textarea):focus{
+        border-color:transparent;
+        outline-offset:0;
+      }
+
+:is(:is(.dialog .mainContainer) textarea):disabled{
+        opacity:0.4;
+        pointer-events:none;
+      }
+
+:is(.dialog .mainContainer) .messageBar{
+      --message-bar-bg-color:#ffebcd;
+      --message-bar-fg-color:#15141a;
+      --message-bar-border-color:rgb(0 0 0 / 8%);
+      --message-bar-icon:url("images/messageBar_warning.svg");
+      --message-bar-icon-color:#cd411e;
+    }
+
+@media (prefers-color-scheme: dark){
+:is(.dialog .mainContainer) .messageBar{
+        --message-bar-bg-color:#5a3100;
+        --message-bar-fg-color:#fbfbfe;
+        --message-bar-border-color:rgb(255 255 255 / 8%);
+        --message-bar-icon-color:#e49c49;
+    }
+      }
+
+@media screen and (forced-colors: active){
+:is(.dialog .mainContainer) .messageBar{
+        --message-bar-bg-color:HighlightText;
+        --message-bar-fg-color:CanvasText;
+        --message-bar-border-color:CanvasText;
+        --message-bar-icon-color:CanvasText;
+    }
+      }
+
+:is(.dialog .mainContainer) .messageBar{
+      align-self:stretch;
+    }
+
+:is(:is(:is(.dialog .mainContainer) .messageBar) > div)::before,:is(:is(:is(.dialog .mainContainer) .messageBar) > div)  > div{
+          margin-block:4px;
+        }
+
+:is(:is(:is(.dialog .mainContainer) .messageBar) > div)  > div{
+          align-items:flex-start;
+          display:flex;
+          flex:1 0 0;
+          flex-direction:column;
+          gap:8px;
+        }
+
+:is(:is(:is(:is(.dialog .mainContainer) .messageBar) > div) > div) .title{
+            font-size:13px;
+            font-weight:590;
+          }
+
+:is(:is(:is(:is(.dialog .mainContainer) .messageBar) > div) > div) .description{
+            font-size:13px;
+          }
+
+:is(.dialog .mainContainer) .toggler{
+      align-items:center;
+      align-self:stretch;
+      display:flex;
+      gap:8px;
+    }
+
+:is(:is(.dialog .mainContainer) .toggler)  > .togglerLabel{
+        user-select:none;
+           user-select:none;
+                user-select:none;
+      }
+
+.textLayer{
+  caret-color:CanvasText;
+  forced-color-adjust:none;
+  inset:0;
+  line-height:1;
+  opacity:1;
+  overflow:clip;
+  position:absolute;
+  text-align:initial;
+  text-size-adjust:none;
+     text-size-adjust:none;
+          text-size-adjust:none;
+  transform-origin:0 0;
+  z-index:0;
+}
+
+.textLayer.highlighting{
+    touch-action:none;
+  }
+
+.textLayer :is(span,br){
+    color:transparent;
+    cursor:text;
+    position:absolute;
+    transform-origin:0% 0%;
+    white-space:pre;
+  }
+
+.textLayer  > :not(.markedContent),.textLayer .markedContent span:not(.markedContent){
+    z-index:1;
+  }
+
+.textLayer span.markedContent{
+    height:0;
+    top:0;
+  }
+
+.textLayer span[role="img"]{
+    cursor:default;
+    user-select:none;
+       user-select:none;
+            user-select:none;
+  }
+
+.textLayer .highlight{
+    --highlight-bg-color:rgb(180 0 170 / 25%);
+    --highlight-selected-bg-color:rgb(0 100 0 / 25%);
+    --highlight-backdrop-filter:none;
+    --highlight-selected-backdrop-filter:none;
+  }
+
+@media screen and (forced-colors: active){
+.textLayer .highlight{
+      --highlight-bg-color:transparent;
+      --highlight-selected-bg-color:transparent;
+      --highlight-backdrop-filter:var(--hcm-highlight-filter);
+      --highlight-selected-backdrop-filter:var(
+        --hcm-highlight-selected-filter
+      );
+  }
+    }
+
+.textLayer .highlight{
+    backdrop-filter:var(--highlight-backdrop-filter);
+            backdrop-filter:var(--highlight-backdrop-filter);
+    background-color:var(--highlight-bg-color);
+    border-radius:4px;
+    margin:-1px;
+    padding:1px;
+  }
+
+.appended:is(.textLayer .highlight){
+      position:initial;
+    }
+
+.begin:is(.textLayer .highlight){
+      border-radius:4px 0 0 4px;
+    }
+
+.end:is(.textLayer .highlight){
+      border-radius:0 4px 4px 0;
+    }
+
+.middle:is(.textLayer .highlight){
+      border-radius:0;
+    }
+
+.selected:is(.textLayer .highlight){
+      backdrop-filter:var(--highlight-selected-backdrop-filter);
+              backdrop-filter:var(--highlight-selected-backdrop-filter);
+      background-color:var(--highlight-selected-bg-color);
+    }
+
+.textLayer ::selection{
+    background:rgb(0 0 255 / 25%);
+    background:color-mix(in srgb, AccentColor, transparent 75%);
+  }
+
+.textLayer ::selection{
+    background:rgb(0 0 255 / 25%);
+    background:color-mix(in srgb, AccentColor, transparent 75%);
+  }
+
+.textLayer br::selection{
+    background:transparent;
+  }
+
+.textLayer br::selection{
+    background:transparent;
+  }
+
+.textLayer .endOfContent{
+    cursor:default;
+    display:block;
+    inset:100% 0 0;
+    position:absolute;
+    user-select:none;
+       user-select:none;
+            user-select:none;
+    z-index:0;
+  }
+
+.textLayer.selecting .endOfContent{
+    top:0;
+  }
+
+.annotationLayer{
+  --annotation-unfocused-field-background:url("data:image/svg+xml;charset=UTF-8,<svg width='1px' height='1px' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' style='fill:rgba(0, 54, 255, 0.13);'/></svg>");
+  --input-focus-border-color:Highlight;
+  --input-focus-outline:1px solid Canvas;
+  --input-unfocused-border-color:transparent;
+  --input-disabled-border-color:transparent;
+  --input-hover-border-color:black;
+  --link-outline:none;
+}
+
+@media screen and (forced-colors: active){
+.annotationLayer{
+    --input-focus-border-color:CanvasText;
+    --input-unfocused-border-color:ActiveText;
+    --input-disabled-border-color:GrayText;
+    --input-hover-border-color:Highlight;
+    --link-outline:1.5px solid LinkText;
+}
+
+    .annotationLayer .textWidgetAnnotation :is(input,textarea):required,.annotationLayer .choiceWidgetAnnotation select:required,.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input:required{
+      outline:1.5px solid selectedItem;
+    }
+
+    .annotationLayer .linkAnnotation{
+      outline:var(--link-outline);
+    }
+
+      :is(.annotationLayer .linkAnnotation):hover{
+        backdrop-filter:var(--hcm-highlight-filter);
+                backdrop-filter:var(--hcm-highlight-filter);
+      }
+
+      :is(.annotationLayer .linkAnnotation) > a:hover{
+        background:none !important;
+        box-shadow:none;
+        opacity:0 !important;
+      }
+
+    .annotationLayer .popupAnnotation .popup{
+      background-color:ButtonFace !important;
+      color:ButtonText !important;
+      outline:calc(1.5px * var(--scale-factor)) solid CanvasText !important;
+    }
+
+    .annotationLayer .highlightArea:hover::after{
+      backdrop-filter:var(--hcm-highlight-filter);
+              backdrop-filter:var(--hcm-highlight-filter);
+      content:"";
+      height:100%;
+      left:0;
+      pointer-events:none;
+      position:absolute;
+      top:0;
+      width:100%;
+    }
+
+    .annotationLayer .popupAnnotation.focused .popup{
+      outline:calc(3px * var(--scale-factor)) solid Highlight !important;
+    }
+  }
+
+.annotationLayer{
+  left:0;
+  pointer-events:none;
+  position:absolute;
+  top:0;
+  transform-origin:0 0;
+}
+
+.annotationLayer[data-main-rotation="90"] .norotate{
+    transform:rotate(270deg) translateX(-100%);
+  }
+
+.annotationLayer[data-main-rotation="180"] .norotate{
+    transform:rotate(180deg) translate(-100%, -100%);
+  }
+
+.annotationLayer[data-main-rotation="270"] .norotate{
+    transform:rotate(90deg) translateY(-100%);
+  }
+
+.annotationLayer.disabled section,.annotationLayer.disabled .popup{
+      pointer-events:none;
+    }
+
+.annotationLayer .annotationContent{
+    height:100%;
+    pointer-events:none;
+    position:absolute;
+    width:100%;
+  }
+
+.freetext:is(.annotationLayer .annotationContent){
+      background:transparent;
+      border:none;
+      font:10px sans-serif;
+      inset:0;
+      line-height:1.35;
+      overflow:visible;
+      user-select:none;
+         user-select:none;
+              user-select:none;
+      white-space:nowrap;
+    }
+
+.annotationLayer section{
+    box-sizing:border-box;
+    pointer-events:auto;
+    position:absolute;
+    text-align:initial;
+    transform-origin:0 0;
+  }
+
+:is(.annotationLayer section):has(div.annotationContent) canvas.annotationContent{
+        display:none;
+      }
+
+.textLayer.selecting ~ .annotationLayer section{
+    pointer-events:none;
+  }
+
+.annotationLayer :is(.linkAnnotation,.buttonWidgetAnnotation.pushButton) > a{
+    font-size:1em;
+    height:100%;
+    left:0;
+    position:absolute;
+    top:0;
+    width:100%;
+  }
+
+.annotationLayer :is(.linkAnnotation,.buttonWidgetAnnotation.pushButton):not(.hasBorder) > a:hover{
+    background-color:rgb(255 255 0);
+    box-shadow:0 2px 10px rgb(255 255 0);
+    opacity:0.2;
+  }
+
+.annotationLayer .linkAnnotation.hasBorder:hover{
+    background-color:rgb(255 255 0 / 20%);
+  }
+
+.annotationLayer .hasBorder{
+    background-size:100% 100%;
+  }
+
+.annotationLayer .textAnnotation img{
+    cursor:pointer;
+    height:100%;
+    left:0;
+    position:absolute;
+    top:0;
+    width:100%;
+  }
+
+.annotationLayer .textWidgetAnnotation :is(input,textarea),.annotationLayer .choiceWidgetAnnotation select,.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input{
+    background-image:var(--annotation-unfocused-field-background);
+    border:2px solid var(--input-unfocused-border-color);
+    box-sizing:border-box;
+    font:calc(9px * var(--scale-factor)) sans-serif;
+    height:100%;
+    margin:0;
+    vertical-align:top;
+    width:100%;
+  }
+
+.annotationLayer .textWidgetAnnotation :is(input,textarea):required,.annotationLayer .choiceWidgetAnnotation select:required,.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input:required{
+    outline:1.5px solid red;
+  }
+
+.annotationLayer .choiceWidgetAnnotation select option{
+    padding:0;
+  }
+
+.annotationLayer .buttonWidgetAnnotation.radioButton input{
+    border-radius:50%;
+  }
+
+.annotationLayer .textWidgetAnnotation textarea{
+    resize:none;
+  }
+
+.annotationLayer .textWidgetAnnotation [disabled]:is(input,textarea),.annotationLayer .choiceWidgetAnnotation select[disabled],.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input[disabled]{
+    background:none;
+    border:2px solid var(--input-disabled-border-color);
+    cursor:not-allowed;
+  }
+
+.annotationLayer .textWidgetAnnotation :is(input,textarea):hover,.annotationLayer .choiceWidgetAnnotation select:hover,.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input:hover{
+    border:2px solid var(--input-hover-border-color);
+  }
+
+.annotationLayer .textWidgetAnnotation :is(input,textarea):hover,.annotationLayer .choiceWidgetAnnotation select:hover,.annotationLayer .buttonWidgetAnnotation.checkBox input:hover{
+    border-radius:2px;
+  }
+
+.annotationLayer .textWidgetAnnotation :is(input,textarea):focus,.annotationLayer .choiceWidgetAnnotation select:focus{
+    background:none;
+    border:2px solid var(--input-focus-border-color);
+    border-radius:2px;
+    outline:var(--input-focus-outline);
+  }
+
+.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) :focus{
+    background-color:transparent;
+    background-image:none;
+  }
+
+.annotationLayer .buttonWidgetAnnotation.checkBox :focus{
+    border:2px solid var(--input-focus-border-color);
+    border-radius:2px;
+    outline:var(--input-focus-outline);
+  }
+
+.annotationLayer .buttonWidgetAnnotation.radioButton :focus{
+    border:2px solid var(--input-focus-border-color);
+    outline:var(--input-focus-outline);
+  }
+
+.annotationLayer .buttonWidgetAnnotation.checkBox input:checked::before,.annotationLayer .buttonWidgetAnnotation.checkBox input:checked::after,.annotationLayer .buttonWidgetAnnotation.radioButton input:checked::before{
+    background-color:CanvasText;
+    content:"";
+    display:block;
+    position:absolute;
+  }
+
+.annotationLayer .buttonWidgetAnnotation.checkBox input:checked::before,.annotationLayer .buttonWidgetAnnotation.checkBox input:checked::after{
+    height:80%;
+    left:45%;
+    width:1px;
+  }
+
+.annotationLayer .buttonWidgetAnnotation.checkBox input:checked::before{
+    transform:rotate(45deg);
+  }
+
+.annotationLayer .buttonWidgetAnnotation.checkBox input:checked::after{
+    transform:rotate(-45deg);
+  }
+
+.annotationLayer .buttonWidgetAnnotation.radioButton input:checked::before{
+    border-radius:50%;
+    height:50%;
+    left:25%;
+    top:25%;
+    width:50%;
+  }
+
+.annotationLayer .textWidgetAnnotation input.comb{
+    font-family:monospace;
+    padding-left:2px;
+    padding-right:0;
+  }
+
+.annotationLayer .textWidgetAnnotation input.comb:focus{
+    width:103%;
+  }
+
+.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input{
+    appearance:none;
+       appearance:none;
+            appearance:none;
+  }
+
+.annotationLayer .fileAttachmentAnnotation .popupTriggerArea{
+    height:100%;
+    width:100%;
+  }
+
+.annotationLayer .popupAnnotation{
+    font-size:calc(9px * var(--scale-factor));
+    height:auto;
+    max-width:45%;
+    pointer-events:none;
+    position:absolute;
+    width:max-content;
+    width:max-content;
+  }
+
+.annotationLayer .popup{
+    background-color:rgb(255 255 153);
+    border-radius:calc(2px * var(--scale-factor));
+    box-shadow:0 calc(2px * var(--scale-factor)) calc(5px * var(--scale-factor)) rgb(136 136 136);
+    cursor:pointer;
+    font:message-box;
+    outline:1.5px solid rgb(255 255 74);
+    padding:calc(6px * var(--scale-factor));
+    pointer-events:auto;
+    white-space:normal;
+    overflow-wrap:break-word;
+  }
+
+.annotationLayer .popupAnnotation.focused .popup{
+    outline-width:3px;
+  }
+
+.annotationLayer .popup *{
+    font-size:calc(9px * var(--scale-factor));
+  }
+
+.annotationLayer .popup > .header{
+    display:inline-block;
+  }
+
+.annotationLayer .popup > .header h1{
+    display:inline;
+  }
+
+.annotationLayer .popup > .header .popupDate{
+    display:inline-block;
+    margin-left:calc(5px * var(--scale-factor));
+    width:fit-content;
+    width:fit-content;
+  }
+
+.annotationLayer .popupContent{
+    border-top:1px solid rgb(51 51 51);
+    margin-top:calc(2px * var(--scale-factor));
+    padding-top:calc(2px * var(--scale-factor));
+  }
+
+.annotationLayer .richText > *{
+    font-size:calc(9px * var(--scale-factor));
+    white-space:pre-wrap;
+  }
+
+.annotationLayer .popupTriggerArea{
+    cursor:pointer;
+  }
+
+.annotationLayer section svg{
+    height:100%;
+    left:0;
+    position:absolute;
+    top:0;
+    width:100%;
+  }
+
+.annotationLayer .annotationTextContent{
+    color:transparent;
+    height:100%;
+    opacity:0;
+    pointer-events:none;
+    position:absolute;
+    user-select:none;
+       user-select:none;
+            user-select:none;
+    width:100%;
+  }
+
+:is(.annotationLayer .annotationTextContent) span{
+      display:inline-block;
+      width:100%;
+    }
+
+.annotationLayer svg.quadrilateralsContainer{
+    contain:strict;
+    height:0;
+    left:0;
+    position:absolute;
+    top:0;
+    width:0;
+    z-index:-1;
+  }
+
+:root{
+  --xfa-unfocused-field-background:url("data:image/svg+xml;charset=UTF-8,<svg width='1px' height='1px' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' style='fill:rgba(0, 54, 255, 0.13);'/></svg>");
+  --xfa-focus-outline:auto;
+}
+
+@media screen and (forced-colors: active){
+  :root{
+    --xfa-focus-outline:2px solid CanvasText;
+  }
+
+  .xfaLayer *:required{
+    outline:1.5px solid selectedItem;
+  }
+}
+
+.xfaLayer{
+  background-color:transparent;
+}
+
+.xfaLayer .highlight{
+  background-color:rgb(239 203 237);
+  border-radius:4px;
+  margin:-1px;
+  padding:1px;
+}
+
+.xfaLayer .highlight.appended{
+  position:initial;
+}
+
+.xfaLayer .highlight.begin{
+  border-radius:4px 0 0 4px;
+}
+
+.xfaLayer .highlight.end{
+  border-radius:0 4px 4px 0;
+}
+
+.xfaLayer .highlight.middle{
+  border-radius:0;
+}
+
+.xfaLayer .highlight.selected{
+  background-color:rgb(203 223 203);
+}
+
+.xfaPage{
+  overflow:hidden;
+  position:relative;
+}
+
+.xfaContentarea{
+  position:absolute;
+}
+
+.xfaPrintOnly{
+  display:none;
+}
+
+.xfaLayer{
+  left:0;
+  line-height:1.2;
+  position:absolute;
+  text-align:initial;
+  top:0;
+  transform-origin:0 0;
+}
+
+.xfaLayer *{
+  background-color:transparent;
+  box-sizing:border-box;
+  color:inherit;
+  font:inherit;
+  font-kerning:inherit;
+  font-style:inherit;
+  font-weight:inherit;
+  letter-spacing:-0.01px;
+  line-height:inherit;
+  margin:0;
+  padding:0;
+  pointer-events:auto;
+  text-align:inherit;
+  text-decoration:inherit;
+}
+
+.xfaLayer *:required{
+  outline:1.5px solid red;
+}
+
+.xfaLayer div,
+.xfaLayer svg,
+.xfaLayer svg *{
+  pointer-events:none;
+}
+
+.xfaLayer a{
+  color:blue;
+}
+
+.xfaRich li{
+  margin-left:3em;
+}
+
+.xfaFont{
+  color:black;
+  font-kerning:none;
+  font-size:10px;
+  font-style:normal;
+  font-weight:normal;
+  letter-spacing:0;
+  text-decoration:none;
+  vertical-align:0;
+}
+
+.xfaCaption{
+  flex:0 0 auto;
+  overflow:hidden;
+}
+
+.xfaCaptionForCheckButton{
+  flex:1 1 auto;
+  overflow:hidden;
+}
+
+.xfaLabel{
+  height:100%;
+  width:100%;
+}
+
+.xfaLeft{
+  align-items:center;
+  display:flex;
+  flex-direction:row;
+}
+
+.xfaRight{
+  align-items:center;
+  display:flex;
+  flex-direction:row-reverse;
+}
+
+:is(.xfaLeft, .xfaRight) > :is(.xfaCaption, .xfaCaptionForCheckButton){
+  max-height:100%;
+}
+
+.xfaTop{
+  align-items:flex-start;
+  display:flex;
+  flex-direction:column;
+}
+
+.xfaBottom{
+  align-items:flex-start;
+  display:flex;
+  flex-direction:column-reverse;
+}
+
+:is(.xfaTop, .xfaBottom) > :is(.xfaCaption, .xfaCaptionForCheckButton){
+  width:100%;
+}
+
+.xfaBorder{
+  background-color:transparent;
+  pointer-events:none;
+  position:absolute;
+}
+
+.xfaWrapped{
+  height:100%;
+  width:100%;
+}
+
+:is(.xfaTextfield, .xfaSelect):focus{
+  background-color:transparent;
+  background-image:none;
+  outline:var(--xfa-focus-outline);
+  outline-offset:-1px;
+}
+
+:is(.xfaCheckbox, .xfaRadio):focus{
+  outline:var(--xfa-focus-outline);
+}
+
+.xfaTextfield,
+.xfaSelect{
+  background-image:var(--xfa-unfocused-field-background);
+  border:none;
+  flex:1 1 auto;
+  height:100%;
+  resize:none;
+  width:100%;
+}
+
+.xfaSelect{
+  padding-inline:2px;
+}
+
+:is(.xfaTop, .xfaBottom) > :is(.xfaTextfield, .xfaSelect){
+  flex:0 1 auto;
+}
+
+.xfaButton{
+  border:none;
+  cursor:pointer;
+  height:100%;
+  text-align:center;
+  width:100%;
+}
+
+.xfaLink{
+  height:100%;
+  left:0;
+  position:absolute;
+  top:0;
+  width:100%;
+}
+
+.xfaCheckbox,
+.xfaRadio{
+  border:none;
+  flex:0 0 auto;
+  height:100%;
+  width:100%;
+}
+
+.xfaRich{
+  height:100%;
+  white-space:pre-wrap;
+  width:100%;
+}
+
+.xfaImage{
+  height:100%;
+  object-fit:contain;
+     object-fit:contain;
+  object-position:left top;
+     object-position:left top;
+  width:100%;
+}
+
+.xfaLrTb,
+.xfaRlTb,
+.xfaTb{
+  align-items:stretch;
+  display:flex;
+  flex-direction:column;
+}
+
+.xfaLr{
+  align-items:stretch;
+  display:flex;
+  flex-direction:row;
+}
+
+.xfaRl{
+  align-items:stretch;
+  display:flex;
+  flex-direction:row-reverse;
+}
+
+.xfaTb > div{
+  justify-content:left;
+}
+
+.xfaPosition{
+  position:relative;
+}
+
+.xfaArea{
+  position:relative;
+}
+
+.xfaValignMiddle{
+  align-items:center;
+  display:flex;
+}
+
+.xfaTable{
+  align-items:stretch;
+  display:flex;
+  flex-direction:column;
+}
+
+.xfaTable .xfaRow{
+  align-items:stretch;
+  display:flex;
+  flex-direction:row;
+}
+
+.xfaTable .xfaRlRow{
+  align-items:stretch;
+  display:flex;
+  flex:1;
+  flex-direction:row-reverse;
+}
+
+.xfaTable .xfaRlRow > div{
+  flex:1;
+}
+
+:is(.xfaNonInteractive, .xfaDisabled, .xfaReadOnly) :is(input, textarea){
+  background:initial;
+}
+
+@media print{
+  .xfaTextfield,
+  .xfaSelect{
+    background:transparent;
+  }
+
+  .xfaSelect{
+    appearance:none;
+       appearance:none;
+            appearance:none;
+    text-indent:1px;
+    text-overflow:"";
+  }
+}
+
+.canvasWrapper svg{
+    transform:none;
+  }
+
+.moving:is(.canvasWrapper svg){
+      z-index:100000;
+    }
+
+[data-main-rotation="90"]:is(.highlight:is(.canvasWrapper svg),.highlightOutline:is(.canvasWrapper svg)) mask,[data-main-rotation="90"]:is(.highlight:is(.canvasWrapper svg),.highlightOutline:is(.canvasWrapper svg)) use:not(.clip,.mask){
+          transform:matrix(0, 1, -1, 0, 1, 0);
+        }
+
+[data-main-rotation="180"]:is(.highlight:is(.canvasWrapper svg),.highlightOutline:is(.canvasWrapper svg)) mask,[data-main-rotation="180"]:is(.highlight:is(.canvasWrapper svg),.highlightOutline:is(.canvasWrapper svg)) use:not(.clip,.mask){
+          transform:matrix(-1, 0, 0, -1, 1, 1);
+        }
+
+[data-main-rotation="270"]:is(.highlight:is(.canvasWrapper svg),.highlightOutline:is(.canvasWrapper svg)) mask,[data-main-rotation="270"]:is(.highlight:is(.canvasWrapper svg),.highlightOutline:is(.canvasWrapper svg)) use:not(.clip,.mask){
+          transform:matrix(0, -1, 1, 0, 0, 1);
+        }
+
+.draw:is(.canvasWrapper svg){
+      mix-blend-mode:normal;
+      position:absolute;
+    }
+
+.draw[data-draw-rotation="90"]:is(.canvasWrapper svg){
+        transform:rotate(90deg);
+      }
+
+.draw[data-draw-rotation="180"]:is(.canvasWrapper svg){
+        transform:rotate(180deg);
+      }
+
+.draw[data-draw-rotation="270"]:is(.canvasWrapper svg){
+        transform:rotate(270deg);
+      }
+
+.highlight:is(.canvasWrapper svg){
+      --blend-mode:multiply;
+    }
+
+@media screen and (forced-colors: active){
+.highlight:is(.canvasWrapper svg){
+        --blend-mode:difference;
+    }
+      }
+
+.highlight:is(.canvasWrapper svg){
+      mix-blend-mode:var(--blend-mode);
+      position:absolute;
+    }
+
+.highlight:is(.canvasWrapper svg):not(.free){
+        fill-rule:evenodd;
+      }
+
+.highlightOutline:is(.canvasWrapper svg){
+      fill:none;
+      fill-rule:evenodd;
+      mix-blend-mode:normal;
+      position:absolute;
+    }
+
+.highlightOutline.hovered:is(.canvasWrapper svg):not(.free, .selected){
+          stroke:var(--hover-outline-color);
+          stroke-width:var(--outline-width);
+        }
+
+.highlightOutline.selected:is(.canvasWrapper svg):not(.free) .mainOutline{
+            stroke:var(--outline-around-color);
+            stroke-width:calc(
+              var(--outline-width) + 2 * var(--outline-around-width)
+            );
+          }
+
+.highlightOutline.selected:is(.canvasWrapper svg):not(.free) .secondaryOutline{
+            stroke:var(--outline-color);
+            stroke-width:var(--outline-width);
+          }
+
+.highlightOutline.free.hovered:is(.canvasWrapper svg):not(.selected){
+          stroke:var(--hover-outline-color);
+          stroke-width:calc(2 * var(--outline-width));
+        }
+
+.highlightOutline.free.selected:is(.canvasWrapper svg) .mainOutline{
+            stroke:var(--outline-around-color);
+            stroke-width:calc(
+              2 * (var(--outline-width) + var(--outline-around-width))
+            );
+          }
+
+.highlightOutline.free.selected:is(.canvasWrapper svg) .secondaryOutline{
+            stroke:var(--outline-color);
+            stroke-width:calc(2 * var(--outline-width));
+          }
+
+.toggle-button{
+  --button-background-color:#f0f0f4;
+  --button-background-color-hover:#e0e0e6;
+  --button-background-color-active:#cfcfd8;
+  --color-accent-primary:#0060df;
+  --color-accent-primary-hover:#0250bb;
+  --color-accent-primary-active:#054096;
+  --border-interactive-color:#8f8f9d;
+  --border-radius-circle:9999px;
+  --border-width:1px;
+  --size-item-small:16px;
+  --size-item-large:32px;
+  --color-canvas:white;
+}
+
+@media (prefers-color-scheme: dark){
+.toggle-button{
+    --button-background-color:color-mix(in srgb, currentcolor 7%, transparent);
+    --button-background-color-hover:color-mix(
+      in srgb,
+      currentcolor 14%,
+      transparent
+    );
+    --button-background-color-active:color-mix(
+      in srgb,
+      currentcolor 21%,
+      transparent
+    );
+    --color-accent-primary:#0df;
+    --color-accent-primary-hover:#80ebff;
+    --color-accent-primary-active:#aaf2ff;
+    --border-interactive-color:#bfbfc9;
+    --color-canvas:#1c1b22;
+}
+  }
+
+@media (forced-colors: active){
+.toggle-button{
+    --color-accent-primary:ButtonText;
+    --color-accent-primary-hover:SelectedItem;
+    --color-accent-primary-active:SelectedItem;
+    --border-interactive-color:ButtonText;
+    --button-background-color:ButtonFace;
+    --border-interactive-color-hover:SelectedItem;
+    --border-interactive-color-active:SelectedItem;
+    --border-interactive-color-disabled:GrayText;
+    --color-canvas:ButtonText;
+}
+  }
+
+.toggle-button{
+  --toggle-background-color:var(--button-background-color);
+  --toggle-background-color-hover:var(--button-background-color-hover);
+  --toggle-background-color-active:var(--button-background-color-active);
+  --toggle-background-color-pressed:var(--color-accent-primary);
+  --toggle-background-color-pressed-hover:var(--color-accent-primary-hover);
+  --toggle-background-color-pressed-active:var(--color-accent-primary-active);
+  --toggle-border-color:var(--border-interactive-color);
+  --toggle-border-color-hover:var(--toggle-border-color);
+  --toggle-border-color-active:var(--toggle-border-color);
+  --toggle-border-radius:var(--border-radius-circle);
+  --toggle-border-width:var(--border-width);
+  --toggle-height:var(--size-item-small);
+  --toggle-width:var(--size-item-large);
+  --toggle-dot-background-color:var(--toggle-border-color);
+  --toggle-dot-background-color-hover:var(--toggle-dot-background-color);
+  --toggle-dot-background-color-active:var(--toggle-dot-background-color);
+  --toggle-dot-background-color-on-pressed:var(--color-canvas);
+  --toggle-dot-margin:1px;
+  --toggle-dot-height:calc(
+    var(--toggle-height) - 2 * var(--toggle-dot-margin) - 2 *
+      var(--toggle-border-width)
+  );
+  --toggle-dot-width:var(--toggle-dot-height);
+  --toggle-dot-transform-x:calc(
+    var(--toggle-width) - 4 * var(--toggle-dot-margin) - var(--toggle-dot-width)
+  );
+
+  appearance:none;
+     appearance:none;
+          appearance:none;
+  background:var(--toggle-background-color);
+  border:var(--toggle-border-width) solid var(--toggle-border-color);
+  border-radius:var(--toggle-border-radius);
+  box-sizing:border-box;
+  flex-shrink:0;
+  height:var(--toggle-height);
+  margin:0;
+  padding:0;
+  width:var(--toggle-width);
+}
+
+.toggle-button:focus-visible{
+    outline:var(--focus-outline);
+    outline-offset:var(--focus-outline-offset);
+  }
+
+.toggle-button:enabled:hover{
+    background:var(--toggle-background-color-hover);
+    border-color:var(--toggle-border-color);
+  }
+
+.toggle-button:enabled:active{
+    background:var(--toggle-background-color-active);
+    border-color:var(--toggle-border-color);
+  }
+
+.toggle-button[aria-pressed="true"]{
+    background:var(--toggle-background-color-pressed);
+    border-color:transparent;
+  }
+
+.toggle-button[aria-pressed="true"]:enabled:hover{
+    background:var(--toggle-background-color-pressed-hover);
+    border-color:transparent;
+  }
+
+.toggle-button[aria-pressed="true"]:enabled:active{
+    background:var(--toggle-background-color-pressed-active);
+    border-color:transparent;
+  }
+
+.toggle-button::before{
+    background-color:var(--toggle-dot-background-color);
+    border-radius:var(--toggle-border-radius);
+    content:"";
+    display:block;
+    height:var(--toggle-dot-height);
+    margin:var(--toggle-dot-margin);
+    translate:0;
+    width:var(--toggle-dot-width);
+  }
+
+.toggle-button[aria-pressed="true"]::before{
+    background-color:var(--toggle-dot-background-color-on-pressed);
+    translate:var(--toggle-dot-transform-x);
+  }
+
+.toggle-button[aria-pressed="true"]:enabled:hover::before,.toggle-button[aria-pressed="true"]:enabled:active::before{
+    background-color:var(--toggle-dot-background-color-on-pressed);
+  }
+
+[dir="rtl"] .toggle-button[aria-pressed="true"]::before{
+    translate:calc(-1 * var(--toggle-dot-transform-x));
+  }
+
+@media (prefers-reduced-motion: no-preference){
+    .toggle-button::before{
+      transition:translate 100ms;
+    }
+  }
+
+@media (prefers-contrast){
+    .toggle-button:enabled:hover{
+      border-color:var(--toggle-border-color-hover);
+    }
+
+    .toggle-button:enabled:active{
+      border-color:var(--toggle-border-color-active);
+    }
+
+    .toggle-button[aria-pressed="true"]:enabled{
+      border-color:var(--toggle-border-color);
+      position:relative;
+    }
+
+    .toggle-button[aria-pressed="true"]:enabled:hover,.toggle-button[aria-pressed="true"]:enabled:hover:active{
+      border-color:var(--toggle-border-color-hover);
+    }
+
+    .toggle-button[aria-pressed="true"]:enabled:active{
+      background-color:var(--toggle-dot-background-color-active);
+      border-color:var(--toggle-dot-background-color-hover);
+    }
+
+    .toggle-button:hover::before,.toggle-button:active::before{
+      background-color:var(--toggle-dot-background-color-hover);
+    }
+  }
+
+@media (forced-colors){
+.toggle-button{
+    --toggle-dot-background-color:var(--color-accent-primary);
+    --toggle-dot-background-color-hover:var(--color-accent-primary-hover);
+    --toggle-dot-background-color-active:var(--color-accent-primary-active);
+    --toggle-dot-background-color-on-pressed:var(--button-background-color);
+    --toggle-background-color-disabled:var(--button-background-color-disabled);
+    --toggle-border-color-hover:var(--border-interactive-color-hover);
+    --toggle-border-color-active:var(--border-interactive-color-active);
+    --toggle-border-color-disabled:var(--border-interactive-color-disabled);
+}
+
+    .toggle-button[aria-pressed="true"]:enabled::after{
+      border:1px solid var(--button-background-color);
+      border-radius:var(--toggle-border-radius);
+      content:"";
+      display:block;
+      height:var(--toggle-height);
+      inset:-2px;
+      position:absolute;
+      width:var(--toggle-width);
+    }
+
+    .toggle-button[aria-pressed="true"]:enabled:active::after{
+      border-color:var(--toggle-border-color-active);
+    }
+  }
+
+:root{
+  --outline-width:2px;
+  --outline-color:#0060df;
+  --outline-around-width:1px;
+  --outline-around-color:#f0f0f4;
+  --hover-outline-around-color:var(--outline-around-color);
+  --focus-outline:solid var(--outline-width) var(--outline-color);
+  --unfocus-outline:solid var(--outline-width) transparent;
+  --focus-outline-around:solid var(--outline-around-width) var(--outline-around-color);
+  --hover-outline-color:#8f8f9d;
+  --hover-outline:solid var(--outline-width) var(--hover-outline-color);
+  --hover-outline-around:solid var(--outline-around-width) var(--hover-outline-around-color);
+  --freetext-line-height:1.35;
+  --freetext-padding:2px;
+  --resizer-bg-color:var(--outline-color);
+  --resizer-size:6px;
+  --resizer-shift:calc(
+    0px - (var(--outline-width) + var(--resizer-size)) / 2 -
+      var(--outline-around-width)
+  );
+  --editorFreeText-editing-cursor:text;
+  --editorInk-editing-cursor:url("images/cursor-editorInk.svg") 0 16, pointer;
+  --editorHighlight-editing-cursor:url("images/cursor-editorTextHighlight.svg") 24 24, text;
+  --editorFreeHighlight-editing-cursor:url("images/cursor-editorFreeHighlight.svg") 1 18, pointer;
+  --new-alt-text-warning-image:url("images/altText_warning.svg");
+}
+
+.visuallyHidden{
+  border:0;
+  font-size:0;
+  height:0;
+  left:0;
+  margin:0;
+  overflow:hidden;
+  padding:0;
+  position:absolute;
+  top:0;
+  white-space:nowrap;
+  width:0;
+}
+
+.textLayer.highlighting{
+    cursor:var(--editorFreeHighlight-editing-cursor);
+  }
+
+.textLayer.highlighting:not(.free) span{
+      cursor:var(--editorHighlight-editing-cursor);
+    }
+
+[role="img"]:is(.textLayer.highlighting:not(.free) span){
+        cursor:var(--editorFreeHighlight-editing-cursor);
+      }
+
+.textLayer.highlighting.free span{
+      cursor:var(--editorFreeHighlight-editing-cursor);
+    }
+
+:is(#viewerContainer.pdfPresentationMode:fullscreen,.annotationEditorLayer.disabled) .noAltTextBadge{
+    display:none !important;
+  }
+
+@media (resolution >= 1.1dppx){
+  :root{
+    --editorFreeText-editing-cursor:url("images/cursor-editorFreeText.svg") 0 16, text;
+  }
+}
+
+@media screen and (forced-colors: active){
+  :root{
+    --outline-color:CanvasText;
+    --outline-around-color:ButtonFace;
+    --resizer-bg-color:ButtonText;
+    --hover-outline-color:Highlight;
+    --hover-outline-around-color:SelectedItemText;
+  }
+}
+
+[data-editor-rotation="90"]{
+  transform:rotate(90deg);
+}
+
+[data-editor-rotation="180"]{
+  transform:rotate(180deg);
+}
+
+[data-editor-rotation="270"]{
+  transform:rotate(270deg);
+}
+
+.annotationEditorLayer{
+  background:transparent;
+  cursor:auto;
+  font-size:calc(100px * var(--scale-factor));
+  inset:0;
+  position:absolute;
+  transform-origin:0 0;
+}
+
+.annotationEditorLayer .selectedEditor{
+    z-index:100000 !important;
+  }
+
+.annotationEditorLayer.drawing *{
+    pointer-events:none !important;
+  }
+
+.annotationEditorLayer.waiting{
+  content:"";
+  cursor:wait;
+  height:100%;
+  inset:0;
+  position:absolute;
+  width:100%;
+}
+
+.annotationEditorLayer.disabled{
+  pointer-events:none;
+}
+
+.annotationEditorLayer.freetextEditing{
+  cursor:var(--editorFreeText-editing-cursor);
+}
+
+.annotationEditorLayer.inkEditing{
+  cursor:var(--editorInk-editing-cursor);
+}
+
+.annotationEditorLayer .draw{
+  box-sizing:border-box;
+}
+
+.annotationEditorLayer :is(.freeTextEditor, .inkEditor, .stampEditor){
+  background:transparent;
+  border:var(--unfocus-outline);
+  cursor:auto;
+  max-height:100%;
+  max-width:100%;
+  position:absolute;
+  transform-origin:0 0;
+  z-index:1;
+}
+
+.draggable.selectedEditor:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)){
+    cursor:move;
+  }
+
+.selectedEditor:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)){
+    border:var(--focus-outline);
+    outline:var(--focus-outline-around);
+  }
+
+.selectedEditor:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor))::before{
+      border:var(--focus-outline-around);
+      content:"";
+      inset:0;
+      pointer-events:none;
+      position:absolute;
+    }
+
+:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)):hover:not(.selectedEditor){
+    border:var(--hover-outline);
+    outline:var(--hover-outline-around);
+  }
+
+:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)):hover:not(.selectedEditor)::before{
+      border:var(--focus-outline-around);
+      content:"";
+      inset:0;
+      position:absolute;
+    }
+
+:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar{
+    --editor-toolbar-delete-image:url("images/editor-toolbar-delete.svg");
+    --editor-toolbar-bg-color:#f0f0f4;
+    --editor-toolbar-highlight-image:url("images/toolbarButton-editorHighlight.svg");
+    --editor-toolbar-fg-color:#2e2e56;
+    --editor-toolbar-border-color:#8f8f9d;
+    --editor-toolbar-hover-border-color:var(--editor-toolbar-border-color);
+    --editor-toolbar-hover-bg-color:#e0e0e6;
+    --editor-toolbar-hover-fg-color:var(--editor-toolbar-fg-color);
+    --editor-toolbar-hover-outline:none;
+    --editor-toolbar-focus-outline-color:#0060df;
+    --editor-toolbar-shadow:0 2px 6px 0 rgb(58 57 68 / 20%);
+    --editor-toolbar-vert-offset:6px;
+    --editor-toolbar-height:28px;
+    --editor-toolbar-padding:2px;
+    --alt-text-done-color:#2ac3a2;
+    --alt-text-warning-color:#0090ed;
+    --alt-text-hover-done-color:var(--alt-text-done-color);
+    --alt-text-hover-warning-color:var(--alt-text-warning-color);
+  }
+
+@media (prefers-color-scheme: dark){
+:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar{
+      --editor-toolbar-bg-color:#2b2a33;
+      --editor-toolbar-fg-color:#fbfbfe;
+      --editor-toolbar-hover-bg-color:#52525e;
+      --editor-toolbar-focus-outline-color:#0df;
+      --alt-text-done-color:#54ffbd;
+      --alt-text-warning-color:#80ebff;
+  }
+    }
+
+@media screen and (forced-colors: active){
+:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar{
+      --editor-toolbar-bg-color:ButtonFace;
+      --editor-toolbar-fg-color:ButtonText;
+      --editor-toolbar-border-color:ButtonText;
+      --editor-toolbar-hover-border-color:AccentColor;
+      --editor-toolbar-hover-bg-color:ButtonFace;
+      --editor-toolbar-hover-fg-color:AccentColor;
+      --editor-toolbar-hover-outline:2px solid var(--editor-toolbar-hover-border-color);
+      --editor-toolbar-focus-outline-color:ButtonBorder;
+      --editor-toolbar-shadow:none;
+      --alt-text-done-color:var(--editor-toolbar-fg-color);
+      --alt-text-warning-color:var(--editor-toolbar-fg-color);
+      --alt-text-hover-done-color:var(--editor-toolbar-hover-fg-color);
+      --alt-text-hover-warning-color:var(--editor-toolbar-hover-fg-color);
+  }
+    }
+
+:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar{
+    align-items:center;
+    background-color:var(--editor-toolbar-bg-color);
+    border:1px solid var(--editor-toolbar-border-color);
+    border-radius:6px;
+    box-shadow:var(--editor-toolbar-shadow);
+    box-sizing:content-box;
+    cursor:default;
+    display:flex;
+    flex-direction:column;
+    height:var(--editor-toolbar-height);
+    inset-block-start:calc(100% + var(--editor-toolbar-vert-offset));
+    inset-inline-end:0;
+    justify-content:center;
+    padding:var(--editor-toolbar-padding);
+    pointer-events:auto;
+    position:absolute;
+    width:fit-content;
+    width:fit-content;
+  }
+
+.hidden:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar){
+      display:none;
+    }
+
+:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar):has(:focus-visible){
+      border-color:transparent;
+    }
+
+[dir="ltr"] :is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar){
+      transform-origin:100% 0;
+    }
+
+[dir="rtl"] :is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar){
+      transform-origin:0 0;
+    }
+
+:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons{
+      align-items:center;
+      display:flex;
+      gap:0;
+      height:100%;
+      justify-content:center;
+    }
+
+:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) button{
+        padding:0;
+      }
+
+:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .divider{
+        border-left:1px solid var(--editor-toolbar-border-color);
+        border-right:none;
+        display:inline-block;
+        height:calc(
+          2 * var(--editor-toolbar-padding) + var(--editor-toolbar-height)
+        );
+        margin-inline:2px;
+        width:0;
+      }
+
+:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .highlightButton{
+        width:var(--editor-toolbar-height);
+      }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .highlightButton)::before{
+          background-color:var(--editor-toolbar-fg-color);
+          content:"";
+          display:inline-block;
+          height:100%;
+          mask-image:var(--editor-toolbar-highlight-image);
+                  mask-image:var(--editor-toolbar-highlight-image);
+          mask-position:center;
+                  mask-position:center;
+          mask-repeat:no-repeat;
+                  mask-repeat:no-repeat;
+          width:100%;
+        }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .highlightButton):hover::before{
+          background-color:var(--editor-toolbar-hover-fg-color);
+        }
+
+:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .delete{
+        width:var(--editor-toolbar-height);
+      }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .delete)::before{
+          background-color:var(--editor-toolbar-fg-color);
+          content:"";
+          display:inline-block;
+          height:100%;
+          mask-image:var(--editor-toolbar-delete-image);
+                  mask-image:var(--editor-toolbar-delete-image);
+          mask-position:center;
+                  mask-position:center;
+          mask-repeat:no-repeat;
+                  mask-repeat:no-repeat;
+          width:100%;
+        }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .delete):hover::before{
+          background-color:var(--editor-toolbar-hover-fg-color);
+        }
+
+:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons)  > *{
+        height:var(--editor-toolbar-height);
+      }
+
+:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons)  > :not(.divider){
+        background-color:transparent;
+        border:none;
+        cursor:pointer;
+      }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) > :not(.divider)):hover{
+          background-color:var(--editor-toolbar-hover-bg-color);
+          border-radius:2px;
+          color:var(--editor-toolbar-hover-fg-color);
+          outline:var(--editor-toolbar-hover-outline);
+          outline-offset:1px;
+        }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) > :not(.divider)):hover:active{
+            outline:none;
+          }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) > :not(.divider)):focus-visible{
+          border-radius:2px;
+          outline:2px solid var(--editor-toolbar-focus-outline-color);
+        }
+
+:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText{
+        --alt-text-add-image:url("images/altText_add.svg");
+        --alt-text-done-image:url("images/altText_done.svg");
+
+        align-items:center;
+        color:var(--editor-toolbar-fg-color);
+        display:flex;
+        font:menu;
+        font-size:12px;
+        font-weight:590;
+        justify-content:center;
+        padding-inline:8px;
+        pointer-events:all;
+        width:max-content;
+        width:max-content;
+      }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText):disabled{
+          pointer-events:none;
+        }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText)::before{
+          background-color:var(--editor-toolbar-fg-color);
+          content:"";
+          display:inline-block;
+          height:13px;
+          margin-inline-end:4px;
+          mask-image:var(--alt-text-add-image);
+                  mask-image:var(--alt-text-add-image);
+          mask-position:center;
+                  mask-position:center;
+          mask-repeat:no-repeat;
+                  mask-repeat:no-repeat;
+          width:12px;
+        }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText):hover::before{
+          background-color:var(--editor-toolbar-hover-fg-color);
+        }
+
+.done:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText)::before{
+          mask-image:var(--alt-text-done-image);
+                  mask-image:var(--alt-text-done-image);
+        }
+
+.new:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText)::before{
+            background-color:var(--alt-text-warning-color);
+            height:16px;
+            mask-image:var(--new-alt-text-warning-image);
+                    mask-image:var(--new-alt-text-warning-image);
+            mask-size:cover;
+                    mask-size:cover;
+            width:16px;
+          }
+
+.new:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText):hover::before{
+            background-color:var(--alt-text-hover-warning-color);
+          }
+
+.new.done:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText)::before{
+              background-color:var(--alt-text-done-color);
+              mask-image:var(--alt-text-done-image);
+                      mask-image:var(--alt-text-done-image);
+            }
+
+.new.done:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText):hover::before{
+              background-color:var(--alt-text-hover-done-color);
+            }
+
+:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText) .tooltip{
+          display:none;
+          overflow-wrap:anywhere;
+        }
+
+.show:is(:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText) .tooltip){
+            --alt-text-tooltip-bg:#f0f0f4;
+            --alt-text-tooltip-fg:#15141a;
+            --alt-text-tooltip-border:#8f8f9d;
+            --alt-text-tooltip-shadow:0px 2px 6px 0px rgb(58 57 68 / 20%);
+          }
+
+@media (prefers-color-scheme: dark){
+.show:is(:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText) .tooltip){
+              --alt-text-tooltip-bg:#1c1b22;
+              --alt-text-tooltip-fg:#fbfbfe;
+              --alt-text-tooltip-shadow:0px 2px 6px 0px #15141a;
+          }
+            }
+
+@media screen and (forced-colors: active){
+.show:is(:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText) .tooltip){
+              --alt-text-tooltip-bg:Canvas;
+              --alt-text-tooltip-fg:CanvasText;
+              --alt-text-tooltip-border:CanvasText;
+              --alt-text-tooltip-shadow:none;
+          }
+            }
+
+.show:is(:is(:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor,.highlightEditor),.textLayer) .editToolbar) .buttons) .altText) .tooltip){
+            align-items:center;
+            background:var(--alt-text-tooltip-bg);
+            border:0.5px solid var(--alt-text-tooltip-border);
+            box-shadow:var(--alt-text-tooltip-shadow);
+            color:var(--alt-text-tooltip-fg);
+            display:inline-flex;
+            flex-direction:column;
+            font-size:12px;
+            height:auto;
+            inset-inline-start:0;
+            justify-content:center;
+            max-width:300px;
+            padding-block:2px 3px;
+            padding-inline:3px;
+            pointer-events:none;
+            position:absolute;
+            top:calc(100% + 2px);
+            width:max-content;
+            width:max-content;
+          }
+
+.annotationEditorLayer .freeTextEditor{
+  height:auto;
+  padding:calc(var(--freetext-padding) * var(--scale-factor));
+  touch-action:none;
+  width:auto;
+}
+
+.annotationEditorLayer .freeTextEditor .internal{
+  background:transparent;
+  border:none;
+  font:10px sans-serif;
+  inset:0;
+  line-height:var(--freetext-line-height);
+  overflow:visible;
+  user-select:none;
+     user-select:none;
+          user-select:none;
+  white-space:nowrap;
+}
+
+.annotationEditorLayer .freeTextEditor .overlay{
+  background:transparent;
+  display:none;
+  height:100%;
+  inset:0;
+  position:absolute;
+  width:100%;
+}
+
+.annotationEditorLayer freetexteditor .overlay.enabled{
+  display:block;
+}
+
+.annotationEditorLayer .freeTextEditor .internal:empty::before{
+  color:gray;
+  content:attr(default-content);
+}
+
+.annotationEditorLayer .freeTextEditor .internal:focus{
+  outline:none;
+  user-select:auto;
+     user-select:auto;
+          user-select:auto;
+}
+
+.annotationEditorLayer .inkEditor{
+  height:100%;
+  width:100%;
+}
+
+.annotationEditorLayer .inkEditor.editing{
+  cursor:inherit;
+}
+
+.annotationEditorLayer .inkEditor .inkEditorCanvas{
+  height:100%;
+  inset:0;
+  position:absolute;
+  touch-action:none;
+  width:100%;
+}
+
+.annotationEditorLayer .stampEditor{
+  height:auto;
+  width:auto;
+}
+
+:is(.annotationEditorLayer .stampEditor) canvas{
+    height:100%;
+    left:0;
+    margin:0;
+    position:absolute;
+    top:0;
+    width:100%;
+  }
+
+:is(.annotationEditorLayer .stampEditor) .noAltTextBadge{
+    --no-alt-text-badge-border-color:#f0f0f4;
+    --no-alt-text-badge-bg-color:#cfcfd8;
+    --no-alt-text-badge-fg-color:#5b5b66;
+  }
+
+@media (prefers-color-scheme: dark){
+:is(.annotationEditorLayer .stampEditor) .noAltTextBadge{
+      --no-alt-text-badge-border-color:#52525e;
+      --no-alt-text-badge-bg-color:#fbfbfe;
+      --no-alt-text-badge-fg-color:#15141a;
+  }
+    }
+
+@media screen and (forced-colors: active){
+:is(.annotationEditorLayer .stampEditor) .noAltTextBadge{
+      --no-alt-text-badge-border-color:ButtonText;
+      --no-alt-text-badge-bg-color:ButtonFace;
+      --no-alt-text-badge-fg-color:ButtonText;
+  }
+    }
+
+:is(.annotationEditorLayer .stampEditor) .noAltTextBadge{
+    align-items:center;
+    background:var(--no-alt-text-badge-bg-color);
+    border:1px solid var(--no-alt-text-badge-border-color);
+    border-radius:2px;
+    display:inline-flex;
+    height:32px;
+    inset-block-end:5px;
+    inset-inline-end:5px;
+    justify-content:center;
+    padding:3px;
+    pointer-events:none;
+    position:absolute;
+    width:32px;
+    z-index:1;
+  }
+
+:is(:is(.annotationEditorLayer .stampEditor) .noAltTextBadge)::before{
+      background-color:var(--no-alt-text-badge-fg-color);
+      content:"";
+      display:inline-block;
+      height:16px;
+      mask-image:var(--new-alt-text-warning-image);
+              mask-image:var(--new-alt-text-warning-image);
+      mask-size:cover;
+              mask-size:cover;
+      width:16px;
+    }
+
+:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers{
+      inset:0;
+      position:absolute;
+    }
+
+.hidden:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers){
+        display:none;
+      }
+
+:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer{
+        background:content-box var(--resizer-bg-color);
+        border:var(--focus-outline-around);
+        border-radius:2px;
+        height:var(--resizer-size);
+        position:absolute;
+        width:var(--resizer-size);
+      }
+
+.topLeft:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          left:var(--resizer-shift);
+          top:var(--resizer-shift);
+        }
+
+.topMiddle:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          left:calc(50% + var(--resizer-shift));
+          top:var(--resizer-shift);
+        }
+
+.topRight:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          right:var(--resizer-shift);
+          top:var(--resizer-shift);
+        }
+
+.middleRight:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          right:var(--resizer-shift);
+          top:calc(50% + var(--resizer-shift));
+        }
+
+.bottomRight:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          bottom:var(--resizer-shift);
+          right:var(--resizer-shift);
+        }
+
+.bottomMiddle:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          bottom:var(--resizer-shift);
+          left:calc(50% + var(--resizer-shift));
+        }
+
+.bottomLeft:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          bottom:var(--resizer-shift);
+          left:var(--resizer-shift);
+        }
+
+.middleLeft:is(:is(:is(.annotationEditorLayer :is(.freeTextEditor,.inkEditor,.stampEditor)) > .resizers) > .resizer){
+          left:var(--resizer-shift);
+          top:calc(50% + var(--resizer-shift));
+        }
+
+.topLeft:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer),.bottomRight:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer){
+        cursor:nwse-resize;
+      }
+
+.topMiddle:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer),.bottomMiddle:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer){
+        cursor:ns-resize;
+      }
+
+.topRight:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer),.bottomLeft:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer){
+        cursor:nesw-resize;
+      }
+
+.middleRight:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer),.middleLeft:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="180"],[data-editor-rotation="0"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="90"],[data-editor-rotation="270"])) > .resizers > .resizer){
+        cursor:ew-resize;
+      }
+
+.topLeft:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer),.bottomRight:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer){
+        cursor:nesw-resize;
+      }
+
+.topMiddle:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer),.bottomMiddle:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer){
+        cursor:ew-resize;
+      }
+
+.topRight:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer),.bottomLeft:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer){
+        cursor:nwse-resize;
+      }
+
+.middleRight:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer),.middleLeft:is(:is(.annotationEditorLayer[data-main-rotation="0"] :is([data-editor-rotation="90"],[data-editor-rotation="270"]),.annotationEditorLayer[data-main-rotation="90"] :is([data-editor-rotation="0"],[data-editor-rotation="180"]),.annotationEditorLayer[data-main-rotation="180"] :is([data-editor-rotation="270"],[data-editor-rotation="90"]),.annotationEditorLayer[data-main-rotation="270"] :is([data-editor-rotation="180"],[data-editor-rotation="0"])) > .resizers > .resizer){
+        cursor:ns-resize;
+      }
+
+:is(.annotationEditorLayer :is([data-main-rotation="0"] [data-editor-rotation="90"],[data-main-rotation="90"] [data-editor-rotation="0"],[data-main-rotation="180"] [data-editor-rotation="270"],[data-main-rotation="270"] [data-editor-rotation="180"])) .editToolbar{
+      rotate:270deg;
+    }
+
+[dir="ltr"] :is(:is(.annotationEditorLayer :is([data-main-rotation="0"] [data-editor-rotation="90"],[data-main-rotation="90"] [data-editor-rotation="0"],[data-main-rotation="180"] [data-editor-rotation="270"],[data-main-rotation="270"] [data-editor-rotation="180"])) .editToolbar){
+        inset-block-start:0;
+        inset-inline-end:calc(0px - var(--editor-toolbar-vert-offset));
+      }
+
+[dir="rtl"] :is(:is(.annotationEditorLayer :is([data-main-rotation="0"] [data-editor-rotation="90"],[data-main-rotation="90"] [data-editor-rotation="0"],[data-main-rotation="180"] [data-editor-rotation="270"],[data-main-rotation="270"] [data-editor-rotation="180"])) .editToolbar){
+        inset-block-start:0;
+        inset-inline-end:calc(100% + var(--editor-toolbar-vert-offset));
+      }
+
+:is(.annotationEditorLayer :is([data-main-rotation="0"] [data-editor-rotation="180"],[data-main-rotation="90"] [data-editor-rotation="90"],[data-main-rotation="180"] [data-editor-rotation="0"],[data-main-rotation="270"] [data-editor-rotation="270"])) .editToolbar{
+      inset-block-start:calc(0pc - var(--editor-toolbar-vert-offset));
+      inset-inline-end:100%;
+      rotate:180deg;
+    }
+
+:is(.annotationEditorLayer :is([data-main-rotation="0"] [data-editor-rotation="270"],[data-main-rotation="90"] [data-editor-rotation="180"],[data-main-rotation="180"] [data-editor-rotation="90"],[data-main-rotation="270"] [data-editor-rotation="0"])) .editToolbar{
+      rotate:90deg;
+    }
+
+[dir="ltr"] :is(:is(.annotationEditorLayer :is([data-main-rotation="0"] [data-editor-rotation="270"],[data-main-rotation="90"] [data-editor-rotation="180"],[data-main-rotation="180"] [data-editor-rotation="90"],[data-main-rotation="270"] [data-editor-rotation="0"])) .editToolbar){
+        inset-block-start:100%;
+        inset-inline-end:calc(100% + var(--editor-toolbar-vert-offset));
+      }
+
+[dir="rtl"] :is(:is(.annotationEditorLayer :is([data-main-rotation="0"] [data-editor-rotation="270"],[data-main-rotation="90"] [data-editor-rotation="180"],[data-main-rotation="180"] [data-editor-rotation="90"],[data-main-rotation="270"] [data-editor-rotation="0"])) .editToolbar){
+        inset-block-start:0;
+        inset-inline-start:calc(0px - var(--editor-toolbar-vert-offset));
+      }
+
+.dialog.altText::backdrop{
+    mask:url("#alttext-manager-mask");
+            mask:url("#alttext-manager-mask");
+  }
+
+.dialog.altText.positioned{
+    margin:0;
+  }
+
+.dialog.altText #altTextContainer{
+    align-items:flex-start;
+    display:inline-flex;
+    flex-direction:column;
+    gap:16px;
+    height:fit-content;
+    height:fit-content;
+    width:300px;
+  }
+
+:is(.dialog.altText #altTextContainer) #overallDescription{
+      align-items:flex-start;
+      align-self:stretch;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+:is(:is(.dialog.altText #altTextContainer) #overallDescription) span{
+        align-self:stretch;
+      }
+
+:is(:is(.dialog.altText #altTextContainer) #overallDescription) .title{
+        font-size:13px;
+        font-style:normal;
+        font-weight:590;
+      }
+
+:is(.dialog.altText #altTextContainer) #addDescription{
+      align-items:stretch;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+:is(:is(.dialog.altText #altTextContainer) #addDescription) .descriptionArea{
+        flex:1;
+        padding-inline:24px 10px;
+      }
+
+:is(:is(:is(.dialog.altText #altTextContainer) #addDescription) .descriptionArea) textarea{
+          min-height:75px;
+          width:100%;
+        }
+
+:is(.dialog.altText #altTextContainer) #buttons{
+      align-items:flex-start;
+      align-self:stretch;
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+    }
+
+.dialog.newAltText{
+  --new-alt-text-ai-disclaimer-icon:url("images/altText_disclaimer.svg");
+  --new-alt-text-spinner-icon:url("images/altText_spinner.svg");
+  --preview-image-bg-color:#f0f0f4;
+  --preview-image-border:none;
+}
+
+@media (prefers-color-scheme: dark){
+.dialog.newAltText{
+    --preview-image-bg-color:#2b2a33;
+}
+  }
+
+@media screen and (forced-colors: active){
+.dialog.newAltText{
+    --preview-image-bg-color:ButtonFace;
+    --preview-image-border:1px solid ButtonText;
+}
+  }
+
+.dialog.newAltText{
+  max-width:570px;
+  min-width:300px;
+  padding:0;
+  width:80%;
+}
+
+.dialog.newAltText.noAi #newAltTextDisclaimer,.dialog.newAltText.noAi #newAltTextCreateAutomatically{
+      display:none !important;
+    }
+
+.dialog.newAltText.aiInstalling #newAltTextCreateAutomatically{
+      display:none !important;
+    }
+
+.dialog.newAltText.aiInstalling #newAltTextDownloadModel{
+      display:flex !important;
+    }
+
+.dialog.newAltText.error #newAltTextNotNow{
+      display:none !important;
+    }
+
+.dialog.newAltText.error #newAltTextCancel{
+      display:inline-block !important;
+    }
+
+.dialog.newAltText:not(.error) #newAltTextError{
+    display:none !important;
+  }
+
+.dialog.newAltText #newAltTextContainer{
+    align-items:flex-start;
+    display:flex;
+    flex:0 1 auto;
+    flex-direction:column;
+    gap:12px;
+    justify-content:flex-end;
+    line-height:normal;
+    padding:16px;
+    width:auto;
+  }
+
+:is(.dialog.newAltText #newAltTextContainer) #mainContent{
+      align-items:flex-start;
+      align-self:stretch;
+      display:flex;
+      flex:1 1 auto;
+      gap:12px;
+      justify-content:flex-end;
+    }
+
+:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionAndSettings{
+        align-items:flex-start;
+        align-self:stretch;
+        display:flex;
+        flex:1 0 0;
+        flex-direction:column;
+        gap:16px;
+      }
+
+:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction{
+        align-items:flex-start;
+        align-self:stretch;
+        display:flex;
+        flex:1 1 auto;
+        flex-direction:column;
+        gap:8px;
+      }
+
+:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer{
+          height:70px;
+          position:relative;
+          width:100%;
+        }
+
+:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer) textarea{
+            height:100%;
+            padding:8px;
+            width:100%;
+          }
+
+:is(:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer) textarea)::placeholder{
+              color:var(--text-secondary-color);
+            }
+
+:is(:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer) textarea)::placeholder{
+              color:var(--text-secondary-color);
+            }
+
+:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer) .altTextSpinner{
+            background-color:var(--text-secondary-color);
+            display:none;
+            height:16px;
+            inset-block-start:8px;
+            inset-inline-start:8px;
+            mask-size:cover;
+                    mask-size:cover;
+            pointer-events:none;
+            position:absolute;
+            width:16px;
+          }
+
+.loading:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer) textarea::placeholder{
+              color:transparent;
+            }
+
+.loading:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer) textarea::placeholder{
+              color:transparent;
+            }
+
+.loading:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescriptionContainer) .altTextSpinner{
+              display:inline-block;
+              mask-image:var(--new-alt-text-spinner-icon);
+                      mask-image:var(--new-alt-text-spinner-icon);
+            }
+
+:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDescription{
+          font-size:11px;
+        }
+
+:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDisclaimer{
+          align-items:flex-start;
+          display:flex;
+          flex-direction:row;
+          font-size:11px;
+          gap:4px;
+        }
+
+:is(:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #descriptionInstruction) #newAltTextDisclaimer)::before{
+            background-color:var(--text-secondary-color);
+            content:"";
+            display:inline-block;
+            flex:1 0 auto;
+            height:16px;
+            mask-image:var(--new-alt-text-ai-disclaimer-icon);
+                    mask-image:var(--new-alt-text-ai-disclaimer-icon);
+            mask-size:cover;
+                    mask-size:cover;
+            width:17px;
+          }
+
+:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #newAltTextDownloadModel{
+        align-items:center;
+        align-self:stretch;
+        display:flex;
+        gap:4px;
+      }
+
+:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #newAltTextDownloadModel)::before{
+          background-color:var(--text-secondary-color);
+          content:"";
+          display:inline-block;
+          height:16px;
+          mask-image:var(--new-alt-text-spinner-icon);
+                  mask-image:var(--new-alt-text-spinner-icon);
+          mask-size:cover;
+                  mask-size:cover;
+          width:16px;
+        }
+
+:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #newAltTextImagePreview{
+        align-items:center;
+        aspect-ratio:1;
+        background-color:var(--preview-image-bg-color);
+        border:var(--preview-image-border);
+        display:flex;
+        flex:0 0 auto;
+        justify-content:center;
+        width:180px;
+      }
+
+:is(:is(:is(.dialog.newAltText #newAltTextContainer) #mainContent) #newAltTextImagePreview)  > canvas{
+          max-height:100%;
+          max-width:100%;
+        }
+
+.colorPicker{
+  --hover-outline-color:#0250bb;
+  --selected-outline-color:#0060df;
+  --swatch-border-color:#cfcfd8;
+}
+
+@media (prefers-color-scheme: dark){
+.colorPicker{
+    --hover-outline-color:#80ebff;
+    --selected-outline-color:#aaf2ff;
+    --swatch-border-color:#52525e;
+}
+  }
+
+@media screen and (forced-colors: active){
+.colorPicker{
+    --hover-outline-color:Highlight;
+    --selected-outline-color:var(--hover-outline-color);
+    --swatch-border-color:ButtonText;
+}
+  }
+
+.colorPicker .swatch{
+    border:1px solid var(--swatch-border-color);
+    border-radius:100%;
+    box-sizing:border-box;
+    forced-color-adjust:none;
+    height:16px;
+    outline-offset:2px;
+    width:16px;
+  }
+
+.colorPicker button:is(:hover,.selected) > .swatch{
+    border:none;
+  }
+
+.annotationEditorLayer[data-main-rotation="0"] .highlightEditor:not(.free) > .editToolbar{
+      rotate:0deg;
+    }
+
+.annotationEditorLayer[data-main-rotation="90"] .highlightEditor:not(.free) > .editToolbar{
+      rotate:270deg;
+    }
+
+.annotationEditorLayer[data-main-rotation="180"] .highlightEditor:not(.free) > .editToolbar{
+      rotate:180deg;
+    }
+
+.annotationEditorLayer[data-main-rotation="270"] .highlightEditor:not(.free) > .editToolbar{
+      rotate:90deg;
+    }
+
+.annotationEditorLayer .highlightEditor{
+    background:transparent;
+    border:none;
+    cursor:auto;
+    max-height:100%;
+    max-width:100%;
+    outline:none;
+    pointer-events:none;
+    position:absolute;
+    transform-origin:0 0;
+    z-index:1;
+  }
+
+:is(.annotationEditorLayer .highlightEditor):not(.free){
+      transform:none;
+    }
+
+:is(.annotationEditorLayer .highlightEditor) .internal{
+      height:100%;
+      left:0;
+      pointer-events:auto;
+      position:absolute;
+      top:0;
+      width:100%;
+    }
+
+.disabled:is(.annotationEditorLayer .highlightEditor) .internal{
+      pointer-events:none;
+    }
+
+.selectedEditor:is(.annotationEditorLayer .highlightEditor) .internal{
+        cursor:pointer;
+      }
+
+:is(.annotationEditorLayer .highlightEditor) .editToolbar{
+      --editor-toolbar-colorpicker-arrow-image:url("images/toolbarButton-menuArrow.svg");
+
+      transform-origin:center !important;
+    }
+
+:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker{
+          align-items:center;
+          display:flex;
+          gap:4px;
+          justify-content:center;
+          padding:4px;
+          position:relative;
+          width:auto;
+        }
+
+:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker)::after{
+            background-color:var(--editor-toolbar-fg-color);
+            content:"";
+            display:inline-block;
+            height:12px;
+            mask-image:var(--editor-toolbar-colorpicker-arrow-image);
+                    mask-image:var(--editor-toolbar-colorpicker-arrow-image);
+            mask-position:center;
+                    mask-position:center;
+            mask-repeat:no-repeat;
+                    mask-repeat:no-repeat;
+            width:12px;
+          }
+
+:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker):hover::after{
+            background-color:var(--editor-toolbar-hover-fg-color);
+          }
+
+:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker):has(.dropdown:not(.hidden)){
+            background-color:var(--editor-toolbar-hover-bg-color);
+          }
+
+:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker):has(.dropdown:not(.hidden))::after{
+              scale:-1;
+            }
+
+:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker) .dropdown{
+            align-items:center;
+            background-color:var(--editor-toolbar-bg-color);
+            border:1px solid var(--editor-toolbar-border-color);
+            border-radius:6px;
+            box-shadow:var(--editor-toolbar-shadow);
+            display:flex;
+            flex-direction:column;
+            gap:11px;
+            inset-block-start:calc(100% + 4px);
+            justify-content:center;
+            padding-block:8px;
+            position:absolute;
+            width:calc(100% + 2 * var(--editor-toolbar-padding));
+          }
+
+:is(:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker) .dropdown) button{
+              align-items:center;
+              background:none;
+              border:none;
+              cursor:pointer;
+              display:flex;
+              height:auto;
+              justify-content:center;
+              width:100%;
+            }
+
+:is(:is(:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker) .dropdown) button):is(:active,:focus-visible){
+                outline:none;
+              }
+
+:is(:is(:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker) .dropdown) button)  > .swatch{
+                outline-offset:2px;
+              }
+
+[aria-selected="true"]:is(:is(:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker) .dropdown) button) > .swatch{
+                outline:2px solid var(--selected-outline-color);
+              }
+
+:is(:is(:is(:is(:is(:is(.annotationEditorLayer .highlightEditor) .editToolbar) .buttons) .colorPicker) .dropdown) button):is(:hover,:active,:focus-visible) > .swatch{
+                outline:2px solid var(--hover-outline-color);
+              }
+
+.editorParamsToolbar:has(#highlightParamsToolbarContainer){
+  padding:unset;
+}
+
+#highlightParamsToolbarContainer{
+  gap:16px;
+  padding-block-end:12px;
+  padding-inline:10px;
+}
+
+#highlightParamsToolbarContainer .colorPicker{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+:is(#highlightParamsToolbarContainer .colorPicker) .dropdown{
+      align-items:center;
+      display:flex;
+      flex-direction:row;
+      height:auto;
+      justify-content:space-between;
+    }
+
+:is(:is(#highlightParamsToolbarContainer .colorPicker) .dropdown) button{
+        align-items:center;
+        background:none;
+        border:none;
+        cursor:pointer;
+        display:flex;
+        flex:0 0 auto;
+        height:auto;
+        justify-content:center;
+        padding:0;
+        width:auto;
+      }
+
+:is(:is(:is(#highlightParamsToolbarContainer .colorPicker) .dropdown) button) .swatch{
+          height:24px;
+          width:24px;
+        }
+
+:is(:is(:is(#highlightParamsToolbarContainer .colorPicker) .dropdown) button):is(:active,:focus-visible){
+          outline:none;
+        }
+
+[aria-selected="true"]:is(:is(:is(#highlightParamsToolbarContainer .colorPicker) .dropdown) button) > .swatch{
+          outline:2px solid var(--selected-outline-color);
+        }
+
+:is(:is(:is(#highlightParamsToolbarContainer .colorPicker) .dropdown) button):is(:hover,:active,:focus-visible) > .swatch{
+          outline:2px solid var(--hover-outline-color);
+        }
+
+#highlightParamsToolbarContainer #editorHighlightThickness{
+    align-items:center;
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+
+:is(#highlightParamsToolbarContainer #editorHighlightThickness) .editorParamsLabel{
+      align-self:stretch;
+      height:auto;
+    }
+
+:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker{
+      align-items:center;
+      align-self:stretch;
+      display:flex;
+      justify-content:space-between;
+
+      --example-color:#bfbfc9;
+    }
+
+@media (prefers-color-scheme: dark){
+:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker{
+        --example-color:#80808e;
+    }
+      }
+
+@media screen and (forced-colors: active){
+:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker{
+        --example-color:CanvasText;
+    }
+      }
+
+:is(:is(:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker) > .editorParamsSlider[disabled]){
+        opacity:0.4;
+      }
+
+:is(:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker)::before,:is(:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker)::after{
+        aspect-ratio:1;
+        background-color:var(--example-color);
+        border-radius:100%;
+        content:"";
+        display:block;
+        width:8px;
+      }
+
+:is(:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker)::after{
+        width:24px;
+      }
+
+:is(:is(#highlightParamsToolbarContainer #editorHighlightThickness) .thicknessPicker) .editorParamsSlider{
+        height:14px;
+        width:unset;
+      }
+
+#highlightParamsToolbarContainer #editorHighlightVisibility{
+    align-items:flex-start;
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+:is(#highlightParamsToolbarContainer #editorHighlightVisibility) .divider{
+      --divider-color:#d7d7db;
+    }
+
+@media (prefers-color-scheme: dark){
+:is(#highlightParamsToolbarContainer #editorHighlightVisibility) .divider{
+        --divider-color:#8f8f9d;
+    }
+      }
+
+@media screen and (forced-colors: active){
+:is(#highlightParamsToolbarContainer #editorHighlightVisibility) .divider{
+        --divider-color:CanvasText;
+    }
+      }
+
+:is(#highlightParamsToolbarContainer #editorHighlightVisibility) .divider{
+      background-color:var(--divider-color);
+      height:1px;
+      margin-block:4px;
+      width:100%;
+    }
+
+:is(#highlightParamsToolbarContainer #editorHighlightVisibility) .toggler{
+      align-items:center;
+      align-self:stretch;
+      display:flex;
+      justify-content:space-between;
+    }
+
+#altTextSettingsDialog{
+  padding:16px;
+}
+
+#altTextSettingsDialog #altTextSettingsContainer{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    width:573px;
+  }
+
+:is(#altTextSettingsDialog #altTextSettingsContainer) .mainContainer{
+      gap:16px;
+    }
+
+:is(#altTextSettingsDialog #altTextSettingsContainer) .description{
+      color:var(--text-secondary-color);
+    }
+
+:is(#altTextSettingsDialog #altTextSettingsContainer) #aiModelSettings{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+:is(:is(#altTextSettingsDialog #altTextSettingsContainer) #aiModelSettings) button{
+        width:fit-content;
+        width:fit-content;
+      }
+
+.download:is(:is(#altTextSettingsDialog #altTextSettingsContainer) #aiModelSettings) #deleteModelButton{
+          display:none;
+        }
+
+:is(:is(#altTextSettingsDialog #altTextSettingsContainer) #aiModelSettings):not(.download) #downloadModelButton{
+          display:none;
+        }
+
+:is(#altTextSettingsDialog #altTextSettingsContainer) #automaticAltText,:is(#altTextSettingsDialog #altTextSettingsContainer) #altTextEditor{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+:is(#altTextSettingsDialog #altTextSettingsContainer) #createModelDescription,:is(#altTextSettingsDialog #altTextSettingsContainer) #aiModelSettings,:is(#altTextSettingsDialog #altTextSettingsContainer) #showAltTextDialogDescription{
+      padding-inline-start:40px;
+    }
+
+:is(#altTextSettingsDialog #altTextSettingsContainer) #automaticSettings{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+:root{
+  --viewer-container-height:0;
+  --pdfViewer-padding-bottom:0;
+  --page-margin:1px auto -8px;
+  --page-border:9px solid transparent;
+  --spreadHorizontalWrapped-margin-LR:-3.5px;
+  --loading-icon-delay:400ms;
+}
+
+@media screen and (forced-colors: active){
+  :root{
+    --pdfViewer-padding-bottom:9px;
+    --page-margin:8px auto -1px;
+    --page-border:1px solid CanvasText;
+    --spreadHorizontalWrapped-margin-LR:3.5px;
+  }
+}
+
+[data-main-rotation="90"]{
+  transform:rotate(90deg) translateY(-100%);
+}
+
+[data-main-rotation="180"]{
+  transform:rotate(180deg) translate(-100%, -100%);
+}
+
+[data-main-rotation="270"]{
+  transform:rotate(270deg) translateX(-100%);
+}
+
+#hiddenCopyElement,
+.hiddenCanvasElement{
+  display:none;
+  height:0;
+  left:0;
+  position:absolute;
+  top:0;
+  width:0;
+}
+
+.pdfViewer{
+  --scale-factor:1;
+  --page-bg-color:unset;
+
+  padding-bottom:var(--pdfViewer-padding-bottom);
+
+  --hcm-highlight-filter:none;
+  --hcm-highlight-selected-filter:none;
+}
+
+@media screen and (forced-colors: active){
+.pdfViewer{
+    --hcm-highlight-filter:invert(100%);
+}
+  }
+
+.pdfViewer.copyAll{
+    cursor:wait;
+  }
+
+.pdfViewer .canvasWrapper{
+    height:100%;
+    overflow:hidden;
+    width:100%;
+  }
+
+:is(.pdfViewer .canvasWrapper) canvas{
+      contain:content;
+      display:block;
+      height:100%;
+      left:0;
+      margin:0;
+      position:absolute;
+      top:0;
+      width:100%;
+    }
+
+:is(:is(.pdfViewer .canvasWrapper) canvas) .structTree{
+        contain:strict;
+      }
+
+.pdfViewer .page{
+  --scale-round-x:1px;
+  --scale-round-y:1px;
+
+  background-clip:content-box;
+  background-color:var(--page-bg-color, rgb(255 255 255));
+  border:var(--page-border);
+  direction:ltr;
+  height:1056px;
+  margin:var(--page-margin);
+  overflow:visible;
+  position:relative;
+  width:816px;
+}
+
+.pdfViewer .dummyPage{
+  height:var(--viewer-container-height);
+  position:relative;
+  width:0;
+}
+
+.pdfViewer.noUserSelect{
+  user-select:none;
+     user-select:none;
+          user-select:none;
+}
+
+.pdfViewer.removePageBorders .page{
+  border:none;
+  margin:0 auto 10px;
+}
+
+.pdfViewer.singlePageView{
+  display:inline-block;
+}
+
+.pdfViewer.singlePageView .page{
+  border:none;
+  margin:0;
+}
+
+.pdfViewer:is(.scrollHorizontal, .scrollWrapped),
+.spread{
+  margin-inline:3.5px;
+  text-align:center;
+}
+
+.pdfViewer.scrollHorizontal,
+.spread{
+  white-space:nowrap;
+}
+
+.pdfViewer.removePageBorders,
+.pdfViewer:is(.scrollHorizontal, .scrollWrapped) .spread{
+  margin-inline:0;
+}
+
+.spread :is(.page, .dummyPage),
+.pdfViewer:is(.scrollHorizontal, .scrollWrapped) :is(.page, .spread){
+  display:inline-block;
+  vertical-align:middle;
+}
+
+.spread .page,
+.pdfViewer:is(.scrollHorizontal, .scrollWrapped) .page{
+  margin-inline:var(--spreadHorizontalWrapped-margin-LR);
+}
+
+.pdfViewer.removePageBorders .spread .page,
+.pdfViewer.removePageBorders:is(.scrollHorizontal, .scrollWrapped) .page{
+  margin-inline:5px;
+}
+
+.pdfViewer .page.loadingIcon::after{
+  background:url("images/loading-icon.gif") center no-repeat;
+  contain:strict;
+  content:"";
+  display:none;
+  height:100%;
+  left:0;
+  position:absolute;
+  top:0;
+  transition-delay:var(--loading-icon-delay);
+  transition-property:display;
+  width:100%;
+  z-index:5;
+}
+
+.pdfViewer .page.loading::after{
+  display:block;
+}
+
+.pdfViewer .page:not(.loading)::after{
+  display:none;
+  transition-property:none;
+}
+
+.pdfPresentationMode .pdfViewer{
+  padding-bottom:0;
+}
+
+.pdfPresentationMode .spread{
+  margin:0;
+}
+
+.pdfPresentationMode .pdfViewer .page{
+  border:2px solid transparent;
+  margin:0 auto;
+}

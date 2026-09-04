@@ -1,0 +1,16 @@
+{
+  "actions": [
+    {
+      "text": "$(play) Start",
+      "command": "npm start",
+      "tooltip": "Run the app.",
+      "color": "#b0eb93"
+    },
+    {
+      "text": "$(tools) DevTools",
+      "command": "npm run start:dev",
+      "tooltip": "Launch the app with Chrome DevTools.",
+      "color": "#93c4eb"
+    }
+  ]
+}

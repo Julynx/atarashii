@@ -1,0 +1,33 @@
+:root {
+  /* https://lospec.com/palette-list/resurrect-64 */
+  --lighter-orange: #fbb954;
+  --light-orange: #f79617;
+  --dark-orange: #fb6b1d;
+
+  --lighter-green: #91db69;
+  --light-green: #1ebc73;
+  --dark-green: #239063;
+
+  --lighter-blue: #8fd3ff;
+  --light-blue: #4d9be6;
+  --dark-blue: #4d65b4;
+
+  --lighter-red: #f04f78;
+  --light-red: #c32454;
+  --dark-red: #831c5d;
+
+  --lighter-purple: #a884f3;
+  --light-purple: #905ea9;
+  --dark-purple: #6b3e75;
+
+  /* https://lospec.com/palette-list/rewild-64 */
+  --white: #ffffff;
+  --lightest-gray: #ebede9;
+  --lighter-gray: #c7cfcc;
+  --light-gray: #a8b5b2;
+  --gray: #819796;
+  --dark-gray: #394a50;
+  --darker-gray: #151d28;
+  --darkest-gray: #10141f;
+  --black: #090a14;
+}

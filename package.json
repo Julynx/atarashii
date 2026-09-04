@@ -1,0 +1,27 @@
+{
+  "name": "atarashii",
+  "version": "1.0.0",
+  "description": "Live editing Markdown to PDF desktop app",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:dev": "electron . --devtools",
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "keywords": [
+    "markdown",
+    "pdf",
+    "live-preview",
+    "converter"
+  ],
+  "author": "Atarashii",
+  "license": "ISC",
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "markdownlint": "^0.41.1",
+    "prettier": "^3.9.6"
+  },
+  "devDependencies": {
+    "electron": "^40.6.0"
+  }
+}

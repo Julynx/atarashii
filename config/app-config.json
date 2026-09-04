@@ -1,0 +1,18 @@
+{
+  "appName": "Atarashii",
+  "windowWidth": 1180,
+  "windowHeight": 780,
+  "minWindowWidth": 840,
+  "minWindowHeight": 580,
+  "autosaveDebounceMs": 500,
+  "defaultProjectFolderName": "Atarashii",
+  "defaultProjectName": "New project",
+  "defaultPdfZoomMode": "fit-width",
+  "markdownFileName": "document.md",
+  "cssFileName": "style.css",
+  "pdfFileName": "document.pdf",
+  "assetsFolderName": "assets",
+  "conversionLogFileName": "conversion.log",
+  "updateCheckTimeoutMs": 8000,
+  "pypiMetadataUrl": "https://pypi.org/pypi/markdown-convert/json"
+}

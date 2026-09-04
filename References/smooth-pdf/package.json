@@ -1,0 +1,85 @@
+{
+  "name": "smooth-pdf",
+  "version": "1.0.6",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "postinstall": "node scripts/ensure-electron.js",
+    "start": "electron .",
+    "build": "electron-builder build --win",
+    "build:installer": "electron-builder build --win nsis",
+    "build:portable": "electron-builder build --win portable",
+    "lint": "eslint . && stylelint **/*.css",
+    "lint:fix": "eslint . --fix && stylelint **/*.css --fix"
+  },
+  "build": {
+    "appId": "com.smoothpdf.viewer",
+    "productName": "SmoothPDF",
+    "icon": "public/icon.ico",
+    "fileAssociations": [
+      {
+        "ext": "pdf",
+        "name": "PDF Document",
+        "description": "Portable Document Format",
+        "role": "Viewer"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "**/*",
+      "!**/*.map",
+      "!node_modules/pdfjs-dist/legacy/**/*",
+      "!node_modules/pdfjs-dist/web/**/*",
+      "!node_modules/pdfjs-dist/types/**/*",
+      "!*.md",
+      "!.project-actions.json",
+      "!ls_out.txt",
+      "!build_error.log",
+      "!.stylelintrc.json",
+      "!eslint.config.mjs",
+      "!.vscode/**/*",
+      "!.github/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    }
+  },
+  "keywords": [
+    "pdf",
+    "viewer"
+  ],
+  "author": "Omega",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "^9.21.0",
+    "7zip-bin": "^5.2.0",
+    "electron": "^40.6.0",
+    "electron-builder": "^24.13.3",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-electron": "^7.0.0",
+    "eslint-plugin-security": "^4.0.0",
+    "eslint-plugin-sonarjs": "^4.0.0",
+    "globals": "^15.15.0",
+    "stylelint": "^17.3.0",
+    "stylelint-config-standard": "^40.0.0",
+    "stylelint-order": "^7.0.1"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "pdfjs-dist": "^4.10.38"
+  }
+}
