@@ -119,6 +119,9 @@
 
               <div id="editor-toolbar-controls" class="embedded-editor-controls">
                 <div id="editor-save-indicator" class="save-indicator">Saved</div>
+                <button id="editor-search-toggle-button" class="editor-tool-button editor-standalone-button" title="Find in document" aria-label="Find in document">
+                  <img src="../../assets/icons/search.svg" alt="" class="editor-button-icon">
+                </button>
                 <div class="editor-control-cluster">
                   <button id="editor-zoom-out-button" class="editor-tool-button" title="Zoom out font" aria-label="Zoom out font">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -142,9 +145,18 @@
                     </svg>
                   </button>
                   <div id="editor-options-dropdown" class="editor-dropdown-menu" hidden>
+                    <button id="editor-menu-undo" class="dropdown-menu-item">
+                      <span class="dropdown-item-label">Undo</span>
+                      <span class="dropdown-item-shortcut">Ctrl+Z</span>
+                    </button>
+                    <button id="editor-menu-redo" class="dropdown-menu-item">
+                      <span class="dropdown-item-label">Redo</span>
+                      <span class="dropdown-item-shortcut">Ctrl+Y</span>
+                    </button>
+                    <div class="dropdown-menu-divider"></div>
                     <button id="editor-toggle-linewrap" class="dropdown-menu-item checked-item">
-                      <span id="editor-linewrap-check" class="dropdown-item-check">✓</span>
                       <span class="dropdown-item-label">Line wrap</span>
+                      <span id="editor-linewrap-check" class="dropdown-item-check">✓</span>
                     </button>
                   </div>
                 </div>
@@ -152,9 +164,34 @@
             </div>
 
             <div class="panel-content-area">
+              <div id="editor-search-dialog" class="editor-search-dialog" hidden>
+                <div class="search-input-wrapper">
+                  <input id="editor-search-input" type="text" class="search-input-field" placeholder="Find" spellcheck="false" autocomplete="off">
+                  <button id="editor-search-clear-button" class="search-tool-button search-clear-button" title="Clear text" aria-label="Clear text" hidden>
+                    <img src="../../assets/icons/clear.svg" alt="" class="search-button-icon">
+                  </button>
+                </div>
+                <button id="editor-search-case-button" class="search-tool-button search-toggle-button" title="Match case" aria-label="Match case" aria-pressed="false">Aa</button>
+                <span id="editor-search-counter" class="search-counter-label">0 / 0</span>
+                <div class="search-nav-cluster">
+                  <button id="editor-search-prev-button" class="search-tool-button" title="Previous coincidence" aria-label="Previous coincidence">
+                    <img src="../../assets/icons/arrow-up.svg" alt="" class="search-button-icon">
+                  </button>
+                  <button id="editor-search-next-button" class="search-tool-button" title="Next coincidence" aria-label="Next coincidence">
+                    <img src="../../assets/icons/arrow-down.svg" alt="" class="search-button-icon">
+                  </button>
+                </div>
+                <button id="editor-search-close-button" class="search-tool-button search-close-button" title="Close" aria-label="Close">
+                  <img src="../../assets/icons/close.svg" alt="" class="search-button-icon">
+                </button>
+              </div>
+
               <div id="text-editor-container" class="editor-host">
                 <div id="editor-line-gutter" class="editor-gutter"></div>
-                <textarea id="editor-textarea" class="code-textarea" spellcheck="false" autocomplete="off" wrap="on"></textarea>
+                <div class="editor-textarea-wrapper">
+                  <div id="editor-search-backdrop" class="editor-search-backdrop" aria-hidden="true"></div>
+                  <textarea id="editor-textarea" class="code-textarea" spellcheck="false" autocomplete="off" wrap="on"></textarea>
+                </div>
               </div>
             </div>
 

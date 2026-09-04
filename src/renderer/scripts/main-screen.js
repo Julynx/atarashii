@@ -31,6 +31,7 @@ export function createMainScreen(screenManager, errorModal) {
   const pdfToolbarElement = document.getElementById("pdf-toolbar-controls");
 
   const textEditor = createTextEditor(errorModal);
+  window.__atarashiiEditor = textEditor;
   const conversionLog = createConversionLog();
   const pdfViewer = createPdfViewer();
 

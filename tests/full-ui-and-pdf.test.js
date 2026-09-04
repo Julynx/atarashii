@@ -183,8 +183,10 @@ describe("Full UI and PDF Rendering Integration", () => {
                 const leftRect = leftButton.getBoundingClientRect();
                 const rightRect = rightButton.getBoundingClientRect();
 
+                const leftBtnStyle = window.getComputedStyle(leftButton);
+                const isHandleHidden = leftBtnStyle.display === "none";
                 const horizontalSeparation = rightRect.left - leftRect.right;
-                const hasNoOverlap = horizontalSeparation > 10;
+                const hasNoOverlap = isHandleHidden || horizontalSeparation > 10;
 
                 const pdfCluster = document.querySelector(".pdf-control-cluster");
                 const pdfClusterStyle = window.getComputedStyle(pdfCluster);

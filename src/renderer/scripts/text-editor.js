@@ -1,7 +1,10 @@
 /**
  * @module text-editor
- * Source text editor component managing document tabs, line numbers, indentation, and automated formatting.
+ * Source text editor component managing document tabs, line numbers, indentation, automated formatting, search, and undo/redo history.
  */
+
+import { createEditorSearch } from "./editor-search.js";
+import { createDocumentHistoryBuffer } from "./editor-history.js";
 
 const AUTOSAVE_DEBOUNCE_MILLISECONDS = 500;
 
@@ -12,6 +15,7 @@ const AUTOSAVE_DEBOUNCE_MILLISECONDS = 500;
  */
 export function createTextEditor(errorModal) {
   const textareaElement = document.getElementById("editor-textarea");
+  const searchBackdropElement = document.getElementById("editor-search-backdrop");
   const lineGutterElement = document.getElementById("editor-line-gutter");
   const markdownTabButton = document.getElementById("tab-document-markdown");
   const cssTabButton = document.getElementById("tab-document-css");
@@ -23,6 +27,12 @@ export function createTextEditor(errorModal) {
   const optionsMenuButton = document.getElementById("editor-options-menu-button");
   const optionsDropdown = document.getElementById("editor-options-dropdown");
   const toggleLineWrapButton = document.getElementById("editor-toggle-linewrap");
+  const undoMenuItem = document.getElementById("editor-menu-undo");
+  const redoMenuItem = document.getElementById("editor-menu-redo");
+
+  const searchController = createEditorSearch(textareaElement, searchBackdropElement);
+  const markdownHistory = createDocumentHistoryBuffer("");
+  const cssHistory = createDocumentHistoryBuffer("");
 
   let currentProjectPath = "";
   let activeMarkdownFileName = "document.md";
@@ -40,13 +50,37 @@ export function createTextEditor(errorModal) {
   let saveIndicatorHideTimerIdentifier = null;
 
   /**
-   * Applies font size and proportional line height to textarea and line gutter.
+   * Returns the history controller associated with the active document tab.
+   * @returns {ReturnType<typeof createDocumentHistoryBuffer>} Active history buffer.
+   */
+  function getActiveHistory() {
+    return activeFileType === "markdown" ? markdownHistory : cssHistory;
+  }
+
+  /**
+   * Synchronizes the enabled states of the dropdown undo and redo buttons.
+   * @returns {void}
+   */
+  function updateMenuState() {
+    const activeHistory = getActiveHistory();
+    if (undoMenuItem) {
+      undoMenuItem.disabled = !activeHistory.canUndo();
+    }
+    if (redoMenuItem) {
+      redoMenuItem.disabled = !activeHistory.canRedo();
+    }
+  }
+
+  /**
+   * Applies font size and proportional line height to textarea, backdrop, and line gutter.
    * @returns {void}
    */
   function applyEditorFontSize() {
     const calculatedLineHeight = Math.round(editorFontSize * 1.54);
     textareaElement.style.fontSize = `${editorFontSize}px`;
     textareaElement.style.lineHeight = `${calculatedLineHeight}px`;
+    searchBackdropElement.style.fontSize = `${editorFontSize}px`;
+    searchBackdropElement.style.lineHeight = `${calculatedLineHeight}px`;
     lineGutterElement.style.fontSize = `${editorFontSize}px`;
     lineGutterElement.style.lineHeight = `${calculatedLineHeight}px`;
 
@@ -54,26 +88,31 @@ export function createTextEditor(errorModal) {
     gutterLines.forEach((lineElement) => {
       lineElement.style.height = `${calculatedLineHeight}px`;
     });
+
+    searchController.synchronizeLayout();
   }
 
   /**
-   * Applies line wrapping configuration to the code textarea.
+   * Applies line wrapping configuration to both textarea and search backdrop.
    * @returns {void}
    */
   function applyLineWrapMode() {
     if (isLineWrapEnabled) {
       textareaElement.wrap = "on";
       textareaElement.classList.remove("no-wrap");
+      searchBackdropElement.classList.remove("no-wrap");
       if (toggleLineWrapButton) {
         toggleLineWrapButton.classList.add("checked-item");
       }
     } else {
       textareaElement.wrap = "off";
       textareaElement.classList.add("no-wrap");
+      searchBackdropElement.classList.add("no-wrap");
       if (toggleLineWrapButton) {
         toggleLineWrapButton.classList.remove("checked-item");
       }
     }
+    searchController.synchronizeLayout();
   }
 
   /**
@@ -102,11 +141,12 @@ export function createTextEditor(errorModal) {
   }
 
   /**
-   * Synchronizes the gutter vertical scroll with the textarea scroll.
+   * Synchronizes gutter and search backdrop scroll offsets with the textarea scroll offset.
    * @returns {void}
    */
   function synchronizeScroll() {
     lineGutterElement.scrollTop = textareaElement.scrollTop;
+    searchController.synchronizeScroll();
   }
 
   /**
@@ -125,6 +165,68 @@ export function createTextEditor(errorModal) {
         saveIndicatorElement.className = "save-indicator";
       }, 1500);
     }
+  }
+
+  /**
+   * Reverts the active document to its previous history state.
+   * @returns {void}
+   */
+  function performUndo() {
+    const activeHistory = getActiveHistory();
+    if (!activeHistory.canUndo()) {
+      return;
+    }
+
+    const previousState = activeHistory.undo();
+    if (!previousState) {
+      return;
+    }
+
+    textareaElement.value = previousState.content;
+    textareaElement.setSelectionRange(previousState.selectionStart, previousState.selectionEnd);
+
+    if (activeFileType === "markdown") {
+      markdownBuffer = previousState.content;
+    } else {
+      cssBuffer = previousState.content;
+    }
+
+    refreshLineNumbers();
+    synchronizeScroll();
+    searchController.refreshSearch();
+    updateMenuState();
+    scheduleAutosave();
+  }
+
+  /**
+   * Re-applies the forward document history state.
+   * @returns {void}
+   */
+  function performRedo() {
+    const activeHistory = getActiveHistory();
+    if (!activeHistory.canRedo()) {
+      return;
+    }
+
+    const nextState = activeHistory.redo();
+    if (!nextState) {
+      return;
+    }
+
+    textareaElement.value = nextState.content;
+    textareaElement.setSelectionRange(nextState.selectionStart, nextState.selectionEnd);
+
+    if (activeFileType === "markdown") {
+      markdownBuffer = nextState.content;
+    } else {
+      cssBuffer = nextState.content;
+    }
+
+    refreshLineNumbers();
+    synchronizeScroll();
+    searchController.refreshSearch();
+    updateMenuState();
+    scheduleAutosave();
   }
 
   /**
@@ -174,6 +276,11 @@ export function createTextEditor(errorModal) {
         const safeSelectionStart = Math.min(previousSelectionStart, formattedContent.length);
         const safeSelectionEnd = Math.min(previousSelectionEnd, formattedContent.length);
         textareaElement.setSelectionRange(safeSelectionStart, safeSelectionEnd);
+
+        const activeHistory = getActiveHistory();
+        activeHistory.pushSnapshot(formattedContent, safeSelectionStart, safeSelectionEnd, false);
+        updateMenuState();
+        searchController.refreshSearch();
       }
 
       displaySaveIndicator("saved", "Saved");
@@ -236,6 +343,8 @@ export function createTextEditor(errorModal) {
 
     refreshLineNumbers();
     synchronizeScroll();
+    searchController.refreshSearch();
+    updateMenuState();
     textareaElement.focus();
   }
 
@@ -305,7 +414,40 @@ export function createTextEditor(errorModal) {
       );
     }
 
+    const activeHistory = getActiveHistory();
+    activeHistory.pushSnapshot(
+      textareaElement.value,
+      textareaElement.selectionStart,
+      textareaElement.selectionEnd,
+      false
+    );
+
     onTextareaInput();
+  }
+
+  /**
+   * Intercepts global keyboard shortcuts for undo and redo operations.
+   * @param {KeyboardEvent} keyboardEvent - Keyboard event descriptor.
+   * @returns {void}
+   */
+  function handleEditorShortcuts(keyboardEvent) {
+    const isControlOrMeta = keyboardEvent.ctrlKey || keyboardEvent.metaKey;
+    if (!isControlOrMeta) {
+      return;
+    }
+
+    const keyName = keyboardEvent.key.toLowerCase();
+
+    if (keyName === "z" && !keyboardEvent.shiftKey) {
+      keyboardEvent.preventDefault();
+      performUndo();
+      return;
+    }
+
+    if (keyName === "y" || (keyName === "z" && keyboardEvent.shiftKey)) {
+      keyboardEvent.preventDefault();
+      performRedo();
+    }
   }
 
   /**
@@ -320,13 +462,42 @@ export function createTextEditor(errorModal) {
       cssBuffer = updatedContent;
     }
 
+    const activeHistory = getActiveHistory();
+    activeHistory.pushSnapshot(
+      updatedContent,
+      textareaElement.selectionStart,
+      textareaElement.selectionEnd,
+      true
+    );
+
+    updateMenuState();
     refreshLineNumbers();
+    searchController.refreshSearch();
     scheduleAutosave();
   }
 
   textareaElement.addEventListener("input", onTextareaInput);
   textareaElement.addEventListener("scroll", synchronizeScroll);
   textareaElement.addEventListener("keydown", handleTabKeyIndentation);
+  textareaElement.addEventListener("keydown", handleEditorShortcuts);
+
+  if (undoMenuItem) {
+    undoMenuItem.addEventListener("click", () => {
+      performUndo();
+      if (optionsDropdown) {
+        optionsDropdown.hidden = true;
+      }
+    });
+  }
+
+  if (redoMenuItem) {
+    redoMenuItem.addEventListener("click", () => {
+      performRedo();
+      if (optionsDropdown) {
+        optionsDropdown.hidden = true;
+      }
+    });
+  }
 
   if (zoomInButton) {
     zoomInButton.addEventListener("click", () => {
@@ -345,6 +516,7 @@ export function createTextEditor(errorModal) {
   if (optionsMenuButton && optionsDropdown) {
     optionsMenuButton.addEventListener("click", (clickEvent) => {
       clickEvent.stopPropagation();
+      updateMenuState();
       optionsDropdown.hidden = !optionsDropdown.hidden;
     });
 
@@ -398,6 +570,9 @@ export function createTextEditor(errorModal) {
       markdownBuffer = documents.markdownContent;
       cssBuffer = documents.cssContent;
 
+      markdownHistory.reset(markdownBuffer);
+      cssHistory.reset(cssBuffer);
+
       activeFileType = "markdown";
       markdownTabButton.classList.add("active-tab");
       cssTabButton.classList.remove("active-tab");
@@ -405,6 +580,8 @@ export function createTextEditor(errorModal) {
       textareaElement.value = markdownBuffer;
       refreshLineNumbers();
       synchronizeScroll();
+      searchController.refreshSearch();
+      updateMenuState();
       displaySaveIndicator("saved", "Saved");
     },
     flushPendingSave,
