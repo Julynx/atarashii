@@ -317,6 +317,9 @@ export function createPdfViewer() {
     });
 
     window.addEventListener("contextmenu", (contextMenuEvent) => {
+      if (contextMenuEvent.target && contextMenuEvent.target.closest("#left-panel")) {
+        return;
+      }
       const activeSelection = window.getSelection();
       if (activeSelection && activeSelection.toString().trim().length > 0) {
         contextMenuEvent.preventDefault();

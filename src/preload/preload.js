@@ -74,8 +74,11 @@ contextBridge.exposeInMainWorld("atarashiiApi", {
   stopConverter() {
     return ipcRenderer.invoke("converter:stop");
   },
-  showContextMenu() {
-    ipcRenderer.send("show-context-menu");
+  showContextMenu(menuType = "viewer") {
+    ipcRenderer.send("show-context-menu", menuType);
+  },
+  showEditorContextMenu() {
+    ipcRenderer.send("show-editor-context-menu");
   },
   onConversionLog(callback) {
     const listener = (_event, logChunk) => callback(logChunk);

@@ -192,6 +192,27 @@ export function createMainScreen(screenManager, errorModal) {
   leftCollapseButton.addEventListener("click", toggleLeftPanel);
   rightCollapseButton.addEventListener("click", toggleRightPanel);
 
+  leftPanelElement.addEventListener("contextmenu", (contextMenuEvent) => {
+    contextMenuEvent.preventDefault();
+    contextMenuEvent.stopPropagation();
+
+    const textareaElement = document.getElementById("editor-textarea");
+    if (
+      textareaElement &&
+      document.activeElement !== textareaElement &&
+      !contextMenuEvent.target.closest("input")
+    ) {
+      textareaElement.focus();
+    }
+
+    if (
+      window.atarashiiApi &&
+      typeof window.atarashiiApi.showEditorContextMenu === "function"
+    ) {
+      window.atarashiiApi.showEditorContextMenu();
+    }
+  });
+
   pdfTabButton.addEventListener("click", () => {
     switchRightPanelTab("pdf");
   });

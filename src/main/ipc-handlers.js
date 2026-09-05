@@ -281,15 +281,52 @@ function registerIpcHandlers(
     return { ok: true };
   });
 
-  ipcMain.on("show-context-menu", (event) => {
+  ipcMain.on("show-context-menu", (event, menuType = "viewer") => {
     const senderWindow = BrowserWindow.fromWebContents(event.sender);
     if (!senderWindow) {
       return;
     }
-    const contextMenu = new Menu();
-    contextMenu.append(new MenuItem({ role: "copy" }));
+    const contextMenu =
+      menuType === "editor"
+        ? createEditorContextMenu()
+        : createViewerContextMenu();
+    contextMenu.popup({ window: senderWindow });
+  });
+
+  ipcMain.on("show-editor-context-menu", (event) => {
+    const senderWindow = BrowserWindow.fromWebContents(event.sender);
+    if (!senderWindow) {
+      return;
+    }
+    const contextMenu = createEditorContextMenu();
     contextMenu.popup({ window: senderWindow });
   });
 }
 
-module.exports = { registerIpcHandlers };
+/**
+ * Constructs an Electron context menu instance for the left panel editor.
+ * @returns {Electron.Menu} Context menu containing Copy, Cut, and Paste options.
+ */
+function createEditorContextMenu() {
+  const contextMenu = new Menu();
+  contextMenu.append(new MenuItem({ label: "Copy", role: "copy" }));
+  contextMenu.append(new MenuItem({ label: "Cut", role: "cut" }));
+  contextMenu.append(new MenuItem({ label: "Paste", role: "paste" }));
+  return contextMenu;
+}
+
+/**
+ * Constructs an Electron context menu instance for the PDF viewer.
+ * @returns {Electron.Menu} Context menu containing the Copy option.
+ */
+function createViewerContextMenu() {
+  const contextMenu = new Menu();
+  contextMenu.append(new MenuItem({ label: "Copy", role: "copy" }));
+  return contextMenu;
+}
+
+module.exports = {
+  registerIpcHandlers,
+  createEditorContextMenu,
+  createViewerContextMenu,
+};

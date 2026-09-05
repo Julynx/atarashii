@@ -33,10 +33,15 @@ describe("Editor Search and History Integration", () => {
           },
         });
 
-        const { registerIpcHandlers } = require("${path.join(__dirname, "..", "src", "main", "ipc-handlers.js").replace(/\\/g, "\\\\")}");
+        const { registerIpcHandlers, createEditorContextMenu } = require("${path.join(__dirname, "..", "src", "main", "ipc-handlers.js").replace(/\\/g, "\\\\")}");
         const dummyLogger = { info() {}, warn() {}, error() {} };
         const dummyConsent = { hasConsent: () => true, grantConsent() {}, clearConsent() {} };
         const dummyConverter = { startLiveConversion: async () => {}, stopLiveConversion: async () => {} };
+        let editorContextMenuIpcCalls = 0;
+        const { ipcMain } = require("electron");
+        ipcMain.on("show-editor-context-menu", () => {
+          editorContextMenuIpcCalls += 1;
+        });
         registerIpcHandlers(win, dummyLogger, dummyConsent, dummyConverter);
 
         const tempDir = fs.mkdtempSync(path.join(app.getPath("temp"), "test-search-run-"));
@@ -230,6 +235,19 @@ describe("Editor Search and History Integration", () => {
                   );
                 });
 
+                const hasEditorContextMenuFunction = typeof window.atarashiiApi.showEditorContextMenu === "function";
+
+                const leftPanelElement = document.getElementById("left-panel");
+                const leftPanelContextEvent = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+                leftPanelElement.dispatchEvent(leftPanelContextEvent);
+                const isLeftPanelContextPrevented = leftPanelContextEvent.defaultPrevented;
+
+                const textareaContextEvent = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+                textarea.dispatchEvent(textareaContextEvent);
+                const isTextareaContextPrevented = textareaContextEvent.defaultPrevented;
+
+                await new Promise((resolve) => setTimeout(resolve, 80));
+
                 return {
                   ok: true,
                   isSearchButtonLeftOfZoom,
@@ -273,11 +291,31 @@ describe("Editor Search and History Integration", () => {
                   isSavePreservingUnformatted,
                   isFormatWorking,
                   hasUnifiedScrollbar,
+                  hasEditorContextMenuFunction,
+                  isLeftPanelContextPrevented,
+                  isTextareaContextPrevented,
                 };
               })()
             \`);
 
-            console.log(JSON.stringify(testResult));
+            const editorMenu = createEditorContextMenu();
+            const editorMenuItems = editorMenu.items;
+            const hasThreeItems = editorMenuItems.length === 3;
+            const isFirstCopy = editorMenuItems[0].label === "Copy" && editorMenuItems[0].role === "copy";
+            const isSecondCut = editorMenuItems[1].label === "Cut" && editorMenuItems[1].role === "cut";
+            const isThirdPaste = editorMenuItems[2].label === "Paste" && editorMenuItems[2].role === "paste";
+            const isEditorContextMenuInvoked = editorContextMenuIpcCalls >= 2;
+
+            const combinedResult = {
+              ...testResult,
+              hasThreeItems,
+              isFirstCopy,
+              isSecondCut,
+              isThirdPaste,
+              isEditorContextMenuInvoked,
+            };
+
+            console.log(JSON.stringify(combinedResult));
             const allPassed =
               testResult.isSearchButtonLeftOfZoom &&
               testResult.initialDialogHidden &&
@@ -317,7 +355,15 @@ describe("Editor Search and History Integration", () => {
               testResult.hasFormatShortcut &&
               testResult.isSavePreservingUnformatted &&
               testResult.isFormatWorking &&
-              testResult.hasUnifiedScrollbar;
+              testResult.hasUnifiedScrollbar &&
+              testResult.hasEditorContextMenuFunction &&
+              testResult.isLeftPanelContextPrevented &&
+              testResult.isTextareaContextPrevented &&
+              isEditorContextMenuInvoked &&
+              hasThreeItems &&
+              isFirstCopy &&
+              isSecondCut &&
+              isThirdPaste;
 
             fs.rmSync(tempDir, { recursive: true, force: true });
             app.exit(allPassed ? 0 : 1);
@@ -509,6 +555,38 @@ describe("Editor Search and History Integration", () => {
           assert.ok(
             parsed.hasUnifiedScrollbar,
             "Editor must have unified scrollbar styling",
+          );
+          assert.ok(
+            parsed.hasEditorContextMenuFunction,
+            "showEditorContextMenu must be exposed on atarashiiApi",
+          );
+          assert.ok(
+            parsed.isLeftPanelContextPrevented,
+            "Right clicking left panel must prevent default context menu",
+          );
+          assert.ok(
+            parsed.isTextareaContextPrevented,
+            "Right clicking textarea must prevent default context menu",
+          );
+          assert.ok(
+            parsed.isEditorContextMenuInvoked,
+            "Right clicking left panel and textarea must trigger showEditorContextMenu IPC",
+          );
+          assert.ok(
+            parsed.hasThreeItems,
+            "Editor context menu must have 3 items",
+          );
+          assert.ok(
+            parsed.isFirstCopy,
+            "First context menu item must be Copy",
+          );
+          assert.ok(
+            parsed.isSecondCut,
+            "Second context menu item must be Cut",
+          );
+          assert.ok(
+            parsed.isThirdPaste,
+            "Third context menu item must be Paste",
           );
           resolve();
         } else {
