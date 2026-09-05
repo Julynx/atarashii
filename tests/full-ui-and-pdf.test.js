@@ -12,7 +12,10 @@ const os = require("node:os");
 
 describe("Full UI and PDF Rendering Integration", () => {
   it("verifies PDF rendering, worker resolution, zoom scaling, link jumping, context menu, and tab button styles", async () => {
-    const testRunnerScript = path.join(os.tmpdir(), `atarashii-ui-test-${Date.now()}.js`);
+    const testRunnerScript = path.join(
+      os.tmpdir(),
+      `atarashii-ui-test-${Date.now()}.js`,
+    );
     const scriptContent = `
       const { app, BrowserWindow, protocol } = require("electron");
       const path = require("path");
@@ -51,6 +54,7 @@ describe("Full UI and PDF Rendering Integration", () => {
         });
 
         const tempDir = fs.mkdtempSync(path.join(app.getPath("temp"), "test-run-"));
+        app.setPath("userData", path.join(tempDir, "user-data"));
         const sampleMd = path.join(tempDir, "document.md");
         const samplePdf = path.join(tempDir, "document.pdf");
         const sectionsText = Array.from({ length: 40 }, (_, i) => "## Section " + i + "\\n\\nBody content for section " + i).join("\\n\\n");
@@ -188,6 +192,9 @@ describe("Full UI and PDF Rendering Integration", () => {
                 const horizontalSeparation = rightRect.left - leftRect.right;
                 const hasNoOverlap = isHandleHidden || horizontalSeparation > 10;
 
+                leftPanel.classList.remove("panel-collapsed");
+                await new Promise((resolve) => setTimeout(resolve, 150));
+
                 const pdfCluster = document.querySelector(".pdf-control-cluster");
                 const pdfClusterStyle = window.getComputedStyle(pdfCluster);
                 const pdfPrintBtn = document.getElementById("pdf-print-action-button");
@@ -196,6 +203,40 @@ describe("Full UI and PDF Rendering Integration", () => {
                                                    pdfPrintBtnStyle.backgroundColor === inactiveBg &&
                                                    pdfClusterStyle.height === "32px" &&
                                                    pdfPrintBtnStyle.height === "32px";
+
+                const logTabButton = document.getElementById("tab-conversion-log");
+                const pdfTabButton = document.getElementById("tab-document-pdf");
+                const pdfToolbar = document.getElementById("pdf-toolbar-controls");
+
+                const isPdfToolbarInitiallyVisible = !pdfToolbar.classList.contains("hidden") &&
+                                                     !pdfToolbar.hidden &&
+                                                     window.getComputedStyle(pdfToolbar).display !== "none";
+
+                logTabButton.click();
+                const isPdfToolbarHiddenInLogTab = (pdfToolbar.classList.contains("hidden") || pdfToolbar.hidden) &&
+                                                   window.getComputedStyle(pdfToolbar).display === "none";
+
+                pdfTabButton.click();
+                const isPdfToolbarRestoredInPdfTab = !pdfToolbar.classList.contains("hidden") &&
+                                                     !pdfToolbar.hidden &&
+                                                     window.getComputedStyle(pdfToolbar).display !== "none";
+
+                const gutter = document.getElementById("editor-line-gutter");
+                const sampleLongText = "This is a very long line of markdown content designed to wrap across multiple lines of the editor display. ".repeat(6);
+                textarea.value = sampleLongText + "\\\\nShort second line.";
+                textarea.dispatchEvent(new Event("input"));
+
+                const line1WrappedHeight = gutter.children[0] ? gutter.children[0].offsetHeight : 0;
+                const line2WrappedHeight = gutter.children[1] ? gutter.children[1].offsetHeight : 0;
+                const isWrappedLineTaller = line1WrappedHeight > line2WrappedHeight;
+
+                lineWrapBtn.click();
+                const line1UnwrappedHeight = gutter.children[0] ? gutter.children[0].offsetHeight : 0;
+                const isUnwrappedSingleLine = line1UnwrappedHeight === line2WrappedHeight;
+
+                lineWrapBtn.click();
+                const line1RewrappedHeight = gutter.children[0] ? gutter.children[0].offsetHeight : 0;
+                const isRewrappedCorrect = line1RewrappedHeight === line1WrappedHeight;
 
                 return {
                   ok: true,
@@ -218,6 +259,12 @@ describe("Full UI and PDF Rendering Integration", () => {
                   isLineWrapInitiallyChecked,
                   isLineWrapToggledOff,
                   arePdfButtonsMatchingTabbar,
+                  isPdfToolbarInitiallyVisible,
+                  isPdfToolbarHiddenInLogTab,
+                  isPdfToolbarRestoredInPdfTab,
+                  isWrappedLineTaller,
+                  isUnwrappedSingleLine,
+                  isRewrappedCorrect,
                 };
               })()
             \`);
@@ -237,7 +284,13 @@ describe("Full UI and PDF Rendering Integration", () => {
                               testResult.menuOpenedAfterClick &&
                               testResult.isLineWrapInitiallyChecked &&
                               testResult.isLineWrapToggledOff &&
-                              testResult.arePdfButtonsMatchingTabbar;
+                              testResult.arePdfButtonsMatchingTabbar &&
+                              testResult.isPdfToolbarInitiallyVisible &&
+                              testResult.isPdfToolbarHiddenInLogTab &&
+                              testResult.isPdfToolbarRestoredInPdfTab &&
+                              testResult.isWrappedLineTaller &&
+                              testResult.isUnwrappedSingleLine &&
+                              testResult.isRewrappedCorrect;
             app.exit(allPassed ? 0 : 1);
           } catch (err) {
             console.error(err);
@@ -280,22 +333,86 @@ describe("Full UI and PDF Rendering Integration", () => {
           const match = stdout.match(/\{.*"ok":true.*\}/);
           assert.ok(match, "Output must contain successful test result");
           const parsed = JSON.parse(match[0]);
-          assert.ok(parsed.isZoomScaled, "Zoom level change must scale the canvas width");
-          assert.ok(parsed.isNavigationWorking, "Link / page jumping must update current page");
-          assert.ok(parsed.hasContextMenuFunction, "showContextMenu IPC must be exposed");
-          assert.ok(parsed.isDistinctBackground, "Inactive tab buttons must have distinct background");
+          assert.ok(
+            parsed.isZoomScaled,
+            "Zoom level change must scale the canvas width",
+          );
+          assert.ok(
+            parsed.isNavigationWorking,
+            "Link / page jumping must update current page",
+          );
+          assert.ok(
+            parsed.hasContextMenuFunction,
+            "showContextMenu IPC must be exposed",
+          );
+          assert.ok(
+            parsed.isDistinctBackground,
+            "Inactive tab buttons must have distinct background",
+          );
           assert.ok(parsed.hasNoOverlap, "Collapse handles must not overlap");
-          assert.ok(parsed.isDefaultFitWidth, "Default PDF zoom must be 'fit-width'");
-          assert.ok(parsed.areInputHeightsMatching, "New project Name and Folder inputs must match height");
-          assert.ok(parsed.isEditorZoomInWorking, "Editor zoom in must increase font size");
-          assert.ok(parsed.isEditorZoomOutWorking, "Editor zoom out must decrease font size");
-          assert.ok(parsed.menuOpenedAfterClick, "Three dot menu must open options dropdown");
-          assert.ok(parsed.isLineWrapInitiallyChecked, "Line wrap must be on by default");
-          assert.ok(parsed.isLineWrapToggledOff, "Line wrap must toggle off when clicked");
-          assert.ok(parsed.arePdfButtonsMatchingTabbar, "PDF buttons must match styling of top tabbar buttons");
+          assert.ok(
+            parsed.isDefaultFitWidth,
+            "Default PDF zoom must be 'fit-width'",
+          );
+          assert.ok(
+            parsed.areInputHeightsMatching,
+            "New project Name and Folder inputs must match height",
+          );
+          assert.ok(
+            parsed.isEditorZoomInWorking,
+            "Editor zoom in must increase font size",
+          );
+          assert.ok(
+            parsed.isEditorZoomOutWorking,
+            "Editor zoom out must decrease font size",
+          );
+          assert.ok(
+            parsed.menuOpenedAfterClick,
+            "Three dot menu must open options dropdown",
+          );
+          assert.ok(
+            parsed.isLineWrapInitiallyChecked,
+            "Line wrap must be on by default",
+          );
+          assert.ok(
+            parsed.isLineWrapToggledOff,
+            "Line wrap must toggle off when clicked",
+          );
+          assert.ok(
+            parsed.arePdfButtonsMatchingTabbar,
+            "PDF buttons must match styling of top tabbar buttons",
+          );
+          assert.ok(
+            parsed.isPdfToolbarInitiallyVisible,
+            "PDF toolbar controls must be visible on document.pdf tab",
+          );
+          assert.ok(
+            parsed.isPdfToolbarHiddenInLogTab,
+            "PDF toolbar controls must be hidden on conversion.log tab",
+          );
+          assert.ok(
+            parsed.isPdfToolbarRestoredInPdfTab,
+            "PDF toolbar controls must restore on document.pdf tab",
+          );
+          assert.ok(
+            parsed.isWrappedLineTaller,
+            "Wrapped line in gutter must be taller than single line",
+          );
+          assert.ok(
+            parsed.isUnwrappedSingleLine,
+            "Toggling line wrap off must reset gutter lines to single height",
+          );
+          assert.ok(
+            parsed.isRewrappedCorrect,
+            "Toggling line wrap back on must restore wrapped gutter height",
+          );
           resolve();
         } else {
-          reject(new Error(`Test failed with exit code ${exitCode}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}`));
+          reject(
+            new Error(
+              `Test failed with exit code ${exitCode}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}`,
+            ),
+          );
         }
       });
     });

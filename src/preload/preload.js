@@ -52,10 +52,18 @@ contextBridge.exposeInMainWorld("atarashiiApi", {
     return ipcRenderer.invoke("project:pick-and-open");
   },
   readProjectDocuments(projectPath, markdownFileName, cssFileName) {
-    return ipcRenderer.invoke("project:read-documents", projectPath, markdownFileName, cssFileName);
+    return ipcRenderer.invoke(
+      "project:read-documents",
+      projectPath,
+      markdownFileName,
+      cssFileName,
+    );
   },
   saveProjectDocument(saveParameters) {
     return ipcRenderer.invoke("project:save-document", saveParameters);
+  },
+  formatDocument(formatParameters) {
+    return ipcRenderer.invoke("project:format-document", formatParameters);
   },
   openAssetsFolder(assetsPath) {
     return ipcRenderer.invoke("project:open-assets-folder", assetsPath);

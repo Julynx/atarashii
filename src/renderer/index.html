@@ -1,286 +1,662 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' safe-file:; connect-src 'self' safe-file:; style-src 'self' 'unsafe-inline'; img-src 'self' safe-file: data:; font-src 'self'; script-src 'self' 'unsafe-eval'; worker-src 'self' blob:;">
-  <title>Atarashii</title>
-  <link rel="stylesheet" href="../../assets/styles/fonts.css">
-  <link rel="stylesheet" href="../../assets/styles/color-palette.css">
-  <link rel="stylesheet" href="../../assets/styles/pdf-viewer.css">
-  <link rel="stylesheet" href="../../assets/styles/main.css">
-</head>
-<body>
-  <div id="window-container">
-    <header id="window-titlebar">
-      <div id="titlebar-left">
-        <span id="titlebar-app-name">Atarashii</span>
-      </div>
-      <div id="titlebar-center">
-        <span id="titlebar-project-name"></span>
-      </div>
-      <div id="titlebar-right">
-        <button id="window-minimize-button" class="titlebar-control-button" title="Minimize" aria-label="Minimize">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <rect y="5" width="12" height="2" fill="currentColor"/>
-          </svg>
-        </button>
-        <button id="window-maximize-button" class="titlebar-control-button" title="Maximize" aria-label="Maximize">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <rect x="1" y="1" width="10" height="10" stroke="currentColor" stroke-width="1.8" fill="none"/>
-          </svg>
-        </button>
-        <button id="window-close-button" class="titlebar-control-button titlebar-close-button" title="Close" aria-label="Close">
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.8"/>
-            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="1.8"/>
-          </svg>
-        </button>
-      </div>
-    </header>
-
-    <main id="window-viewport">
-      <section id="screen-loading" class="screen-view screen-centered-view active-screen">
-        <div class="activity-spinner"></div>
-        <p id="loading-status-text" class="status-indicator-text">Checking requirements...</p>
-      </section>
-
-      <section id="screen-requirements" class="screen-view screen-centered-view" hidden>
-        <div class="centered-modal-card">
-          <h2 class="card-heading">Missing Requirements</h2>
-          <p class="card-lead-text">Atarashii requires the following dependencies to function. Click below to install them.</p>
-          <div id="requirements-card-list" class="requirements-list"></div>
-          <button id="install-requirements-button" class="action-button action-primary-button">Install requirements</button>
-          <div id="install-progress-indicator" class="progress-indicator-row" hidden>
-            <div class="activity-spinner activity-spinner-small"></div>
-            <span id="install-progress-message" class="status-indicator-text">Installing...</span>
-          </div>
-          <div id="requirements-error-container" class="output-error-panel" hidden>
-            <p class="error-panel-title">Installation failed. Output details:</p>
-            <pre id="requirements-error-text" class="code-output-block"></pre>
-          </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' safe-file:; connect-src 'self' safe-file:; style-src 'self' 'unsafe-inline'; img-src 'self' safe-file: data:; font-src 'self'; script-src 'self' 'unsafe-eval'; worker-src 'self' blob:;"
+    />
+    <title>Atarashii</title>
+    <link rel="stylesheet" href="../../assets/styles/fonts.css" />
+    <link rel="stylesheet" href="../../assets/styles/color-palette.css" />
+    <link rel="stylesheet" href="../../assets/styles/pdf-viewer.css" />
+    <link rel="stylesheet" href="../../assets/styles/main.css" />
+  </head>
+  <body>
+    <div id="window-container">
+      <header id="window-titlebar">
+        <div id="titlebar-left">
+          <span id="titlebar-app-name">Atarashii</span>
         </div>
-      </section>
+        <div id="titlebar-center">
+          <span id="titlebar-project-name"></span>
+        </div>
+        <div id="titlebar-right">
+          <button
+            id="window-minimize-button"
+            class="titlebar-control-button"
+            title="Minimize"
+            aria-label="Minimize"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect y="5" width="12" height="2" fill="currentColor" />
+            </svg>
+          </button>
+          <button
+            id="window-maximize-button"
+            class="titlebar-control-button"
+            title="Maximize"
+            aria-label="Maximize"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect
+                x="1"
+                y="1"
+                width="10"
+                height="10"
+                stroke="currentColor"
+                stroke-width="1.8"
+                fill="none"
+              />
+            </svg>
+          </button>
+          <button
+            id="window-close-button"
+            class="titlebar-control-button titlebar-close-button"
+            title="Close"
+            aria-label="Close"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <line
+                x1="1"
+                y1="1"
+                x2="11"
+                y2="11"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <line
+                x1="11"
+                y1="1"
+                x2="1"
+                y2="11"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+            </svg>
+          </button>
+        </div>
+      </header>
 
-      <section id="screen-update" class="screen-view screen-centered-view" hidden>
-        <div class="centered-modal-card">
-          <h2 class="card-heading">Package Update</h2>
-          <p class="card-lead-text">markdown-convert is out of date.<br>Updating package, please wait...</p>
+      <main id="window-viewport">
+        <section
+          id="screen-loading"
+          class="screen-view screen-centered-view active-screen"
+        >
           <div class="activity-spinner"></div>
-          <div id="update-error-container" class="output-error-panel" hidden>
-            <p class="error-panel-title">Update failed. Output details:</p>
-            <pre id="update-error-text" class="code-output-block"></pre>
-            <div class="horizontal-button-row">
-              <button id="update-retry-button" class="action-button action-primary-button">Retry</button>
-              <button id="update-continue-button" class="action-button action-secondary-button">Continue without updating</button>
+          <p id="loading-status-text" class="status-indicator-text">
+            Checking requirements...
+          </p>
+        </section>
+
+        <section
+          id="screen-requirements"
+          class="screen-view screen-centered-view"
+          hidden
+        >
+          <div class="centered-modal-card">
+            <h2 class="card-heading">Missing Requirements</h2>
+            <p class="card-lead-text">
+              Atarashii requires the following dependencies to function. Click
+              below to install them.
+            </p>
+            <div id="requirements-card-list" class="requirements-list"></div>
+            <button
+              id="install-requirements-button"
+              class="action-button action-primary-button"
+            >
+              Install requirements
+            </button>
+            <div
+              id="install-progress-indicator"
+              class="progress-indicator-row"
+              hidden
+            >
+              <div class="activity-spinner activity-spinner-small"></div>
+              <span id="install-progress-message" class="status-indicator-text"
+                >Installing...</span
+              >
+            </div>
+            <div
+              id="requirements-error-container"
+              class="output-error-panel"
+              hidden
+            >
+              <p class="error-panel-title">
+                Installation failed. Output details:
+              </p>
+              <pre id="requirements-error-text" class="code-output-block"></pre>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="screen-welcome" class="screen-view screen-centered-view" hidden>
-        <div class="centered-modal-card welcome-card">
-          <button id="welcome-new-project-button" class="welcome-action-button">New project</button>
-          <button id="welcome-open-project-button" class="welcome-action-button">Open project</button>
-        </div>
-      </section>
+        <section
+          id="screen-update"
+          class="screen-view screen-centered-view"
+          hidden
+        >
+          <div class="centered-modal-card">
+            <h2 class="card-heading">Package Update</h2>
+            <p class="card-lead-text">
+              markdown-convert is out of date.<br />Updating package, please
+              wait...
+            </p>
+            <div class="activity-spinner"></div>
+            <div id="update-error-container" class="output-error-panel" hidden>
+              <p class="error-panel-title">Update failed. Output details:</p>
+              <pre id="update-error-text" class="code-output-block"></pre>
+              <div class="horizontal-button-row">
+                <button
+                  id="update-retry-button"
+                  class="action-button action-primary-button"
+                >
+                  Retry
+                </button>
+                <button
+                  id="update-continue-button"
+                  class="action-button action-secondary-button"
+                >
+                  Continue without updating
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <section id="screen-new-project" class="screen-view screen-centered-view" hidden>
-        <div class="centered-modal-card new-project-card">
-          <div class="form-field-group">
-            <label class="form-field-label" for="project-folder-input">Atarashii projects folder</label>
-            <div class="folder-input-composite-row">
-              <input type="text" id="project-folder-input" class="text-input-field" spellcheck="false" autocomplete="off">
-              <button id="browse-folder-button" class="icon-utility-button" title="Select folder" aria-label="Select folder">
-                <img src="../../assets/icons/folder.svg" alt="" class="utility-icon">
+        <section
+          id="screen-welcome"
+          class="screen-view screen-centered-view"
+          hidden
+        >
+          <div class="centered-modal-card welcome-card">
+            <button
+              id="welcome-new-project-button"
+              class="welcome-action-button"
+            >
+              New project
+            </button>
+            <button
+              id="welcome-open-project-button"
+              class="welcome-action-button"
+            >
+              Open project
+            </button>
+          </div>
+        </section>
+
+        <section
+          id="screen-new-project"
+          class="screen-view screen-centered-view"
+          hidden
+        >
+          <div class="centered-modal-card new-project-card">
+            <div class="form-field-group">
+              <label class="form-field-label" for="project-folder-input"
+                >Atarashii projects folder</label
+              >
+              <div class="folder-input-composite-row">
+                <input
+                  type="text"
+                  id="project-folder-input"
+                  class="text-input-field"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+                <button
+                  id="browse-folder-button"
+                  class="icon-utility-button"
+                  title="Select folder"
+                  aria-label="Select folder"
+                >
+                  <img
+                    src="../../assets/icons/folder.svg"
+                    alt=""
+                    class="utility-icon"
+                  />
+                </button>
+              </div>
+            </div>
+            <div class="form-field-group">
+              <label class="form-field-label" for="project-name-input"
+                >Name</label
+              >
+              <input
+                type="text"
+                id="project-name-input"
+                class="text-input-field"
+                spellcheck="false"
+                autocomplete="off"
+              />
+            </div>
+            <div class="card-button-row">
+              <button
+                id="cancel-new-project-button"
+                class="action-button action-secondary-button"
+              >
+                Cancel
+              </button>
+              <button
+                id="confirm-new-project-button"
+                class="action-button action-primary-button"
+              >
+                Continue
               </button>
             </div>
           </div>
-          <div class="form-field-group">
-            <label class="form-field-label" for="project-name-input">Name</label>
-            <input type="text" id="project-name-input" class="text-input-field" spellcheck="false" autocomplete="off">
-          </div>
-          <div class="card-button-row">
-            <button id="cancel-new-project-button" class="action-button action-secondary-button">Cancel</button>
-            <button id="confirm-new-project-button" class="action-button action-primary-button">Continue</button>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="screen-main" class="screen-view main-workspace-view" hidden>
-        <div id="workspace-container">
-          <div id="left-panel" class="workspace-panel">
-            <div class="panel-tab-bar">
-              <button id="tab-document-markdown" class="floating-tab-button active-tab">document.md</button>
-              <button id="tab-document-css" class="floating-tab-button">style.css</button>
-              <button id="button-open-assets" class="floating-tab-button icon-tab-button" title="Open assets folder in explorer" aria-label="Open assets folder in explorer">
-                <img src="../../assets/icons/folder.svg" alt="" class="tab-button-icon">
+        <section
+          id="screen-main"
+          class="screen-view main-workspace-view"
+          hidden
+        >
+          <div id="workspace-container">
+            <div id="left-panel" class="workspace-panel">
+              <div class="panel-tab-bar">
+                <button
+                  id="tab-document-markdown"
+                  class="floating-tab-button active-tab"
+                >
+                  document.md
+                </button>
+                <button id="tab-document-css" class="floating-tab-button">
+                  style.css
+                </button>
+                <button
+                  id="button-open-assets"
+                  class="floating-tab-button icon-tab-button"
+                  title="Open assets folder in explorer"
+                  aria-label="Open assets folder in explorer"
+                >
+                  <img
+                    src="../../assets/icons/folder.svg"
+                    alt=""
+                    class="tab-button-icon"
+                  />
+                </button>
+
+                <div
+                  id="editor-toolbar-controls"
+                  class="embedded-editor-controls"
+                >
+                  <div id="editor-save-indicator" class="save-indicator">
+                    Saved
+                  </div>
+                  <button
+                    id="editor-search-toggle-button"
+                    class="editor-tool-button editor-standalone-button"
+                    title="Find in document"
+                    aria-label="Find in document"
+                  >
+                    <img
+                      src="../../assets/icons/search.svg"
+                      alt=""
+                      class="editor-button-icon"
+                    />
+                  </button>
+                  <div class="editor-control-cluster">
+                    <button
+                      id="editor-zoom-out-button"
+                      class="editor-tool-button"
+                      title="Zoom out font"
+                      aria-label="Zoom out font"
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </button>
+                    <div class="editor-control-divider"></div>
+                    <button
+                      id="editor-zoom-in-button"
+                      class="editor-tool-button"
+                      title="Zoom in font"
+                      aria-label="Zoom in font"
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="editor-dropdown-wrapper">
+                    <button
+                      id="editor-options-menu-button"
+                      class="editor-tool-button editor-menu-button"
+                      title="Editor options"
+                      aria-label="Editor options"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <circle cx="12" cy="5" r="2.2"></circle>
+                        <circle cx="12" cy="12" r="2.2"></circle>
+                        <circle cx="12" cy="19" r="2.2"></circle>
+                      </svg>
+                    </button>
+                    <div
+                      id="editor-options-dropdown"
+                      class="editor-dropdown-menu"
+                      hidden
+                    >
+                      <button id="editor-menu-undo" class="dropdown-menu-item">
+                        <span class="dropdown-item-label">Undo</span>
+                        <span class="dropdown-item-shortcut">Ctrl+Z</span>
+                      </button>
+                      <button id="editor-menu-redo" class="dropdown-menu-item">
+                        <span class="dropdown-item-label">Redo</span>
+                        <span class="dropdown-item-shortcut">Ctrl+Y</span>
+                      </button>
+                      <div class="dropdown-menu-divider"></div>
+                      <button
+                        id="editor-menu-format"
+                        class="dropdown-menu-item"
+                      >
+                        <span class="dropdown-item-label">Format</span>
+                        <span class="dropdown-item-shortcut">Shift+Alt+F</span>
+                      </button>
+                      <div class="dropdown-menu-divider"></div>
+                      <button
+                        id="editor-toggle-linewrap"
+                        class="dropdown-menu-item checked-item"
+                      >
+                        <span class="dropdown-item-label">Line wrap</span>
+                        <span
+                          id="editor-linewrap-check"
+                          class="dropdown-item-check"
+                          >✓</span
+                        >
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel-content-area">
+                <div
+                  id="editor-search-dialog"
+                  class="editor-search-dialog"
+                  hidden
+                >
+                  <div class="search-input-wrapper">
+                    <input
+                      id="editor-search-input"
+                      type="text"
+                      class="search-input-field"
+                      placeholder="Find"
+                      spellcheck="false"
+                      autocomplete="off"
+                    />
+                    <button
+                      id="editor-search-clear-button"
+                      class="search-tool-button search-clear-button"
+                      title="Clear text"
+                      aria-label="Clear text"
+                      hidden
+                    >
+                      <img
+                        src="../../assets/icons/clear.svg"
+                        alt=""
+                        class="search-button-icon"
+                      />
+                    </button>
+                  </div>
+                  <button
+                    id="editor-search-case-button"
+                    class="search-tool-button search-toggle-button"
+                    title="Match case"
+                    aria-label="Match case"
+                    aria-pressed="false"
+                  >
+                    Aa
+                  </button>
+                  <span id="editor-search-counter" class="search-counter-label"
+                    >0 / 0</span
+                  >
+                  <div class="search-nav-cluster">
+                    <button
+                      id="editor-search-prev-button"
+                      class="search-tool-button"
+                      title="Previous coincidence"
+                      aria-label="Previous coincidence"
+                    >
+                      <img
+                        src="../../assets/icons/arrow-up.svg"
+                        alt=""
+                        class="search-button-icon"
+                      />
+                    </button>
+                    <button
+                      id="editor-search-next-button"
+                      class="search-tool-button"
+                      title="Next coincidence"
+                      aria-label="Next coincidence"
+                    >
+                      <img
+                        src="../../assets/icons/arrow-down.svg"
+                        alt=""
+                        class="search-button-icon"
+                      />
+                    </button>
+                  </div>
+                  <button
+                    id="editor-search-close-button"
+                    class="search-tool-button search-close-button"
+                    title="Close"
+                    aria-label="Close"
+                  >
+                    <img
+                      src="../../assets/icons/close.svg"
+                      alt=""
+                      class="search-button-icon"
+                    />
+                  </button>
+                </div>
+
+                <div id="text-editor-container" class="editor-host">
+                  <div id="editor-line-gutter" class="editor-gutter"></div>
+                  <div class="editor-textarea-wrapper">
+                    <div
+                      id="editor-search-backdrop"
+                      class="editor-search-backdrop"
+                      aria-hidden="true"
+                    ></div>
+                    <textarea
+                      id="editor-textarea"
+                      class="code-textarea"
+                      spellcheck="false"
+                      autocomplete="off"
+                      wrap="on"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                id="left-panel-collapse-button"
+                class="panel-toggle-handle collapse-to-left"
+                title="Toggle left panel"
+                aria-label="Toggle left panel"
+              >
+                <img
+                  id="left-panel-arrow-icon"
+                  src="../../assets/icons/arrow-left.svg"
+                  alt=""
+                  class="toggle-arrow-icon"
+                />
+              </button>
+            </div>
+
+            <div id="right-panel" class="workspace-panel">
+              <button
+                id="right-panel-collapse-button"
+                class="panel-toggle-handle collapse-to-right"
+                title="Toggle right panel"
+                aria-label="Toggle right panel"
+              >
+                <img
+                  id="right-panel-arrow-icon"
+                  src="../../assets/icons/arrow-right.svg"
+                  alt=""
+                  class="toggle-arrow-icon"
+                />
               </button>
 
-              <div id="editor-toolbar-controls" class="embedded-editor-controls">
-                <div id="editor-save-indicator" class="save-indicator">Saved</div>
-                <button id="editor-search-toggle-button" class="editor-tool-button editor-standalone-button" title="Find in document" aria-label="Find in document">
-                  <img src="../../assets/icons/search.svg" alt="" class="editor-button-icon">
+              <div class="panel-tab-bar">
+                <button
+                  id="tab-document-pdf"
+                  class="floating-tab-button active-tab"
+                >
+                  document.pdf
                 </button>
-                <div class="editor-control-cluster">
-                  <button id="editor-zoom-out-button" class="editor-tool-button" title="Zoom out font" aria-label="Zoom out font">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                  </button>
-                  <div class="editor-control-divider"></div>
-                  <button id="editor-zoom-in-button" class="editor-tool-button" title="Zoom in font" aria-label="Zoom in font">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                  </button>
-                </div>
-                <div class="editor-dropdown-wrapper">
-                  <button id="editor-options-menu-button" class="editor-tool-button editor-menu-button" title="Editor options" aria-label="Editor options">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="5" r="2.2"></circle>
-                      <circle cx="12" cy="12" r="2.2"></circle>
-                      <circle cx="12" cy="19" r="2.2"></circle>
-                    </svg>
-                  </button>
-                  <div id="editor-options-dropdown" class="editor-dropdown-menu" hidden>
-                    <button id="editor-menu-undo" class="dropdown-menu-item">
-                      <span class="dropdown-item-label">Undo</span>
-                      <span class="dropdown-item-shortcut">Ctrl+Z</span>
-                    </button>
-                    <button id="editor-menu-redo" class="dropdown-menu-item">
-                      <span class="dropdown-item-label">Redo</span>
-                      <span class="dropdown-item-shortcut">Ctrl+Y</span>
-                    </button>
-                    <div class="dropdown-menu-divider"></div>
-                    <button id="editor-toggle-linewrap" class="dropdown-menu-item checked-item">
-                      <span class="dropdown-item-label">Line wrap</span>
-                      <span id="editor-linewrap-check" class="dropdown-item-check">✓</span>
-                    </button>
+                <button id="tab-conversion-log" class="floating-tab-button">
+                  conversion.log
+                </button>
+
+                <div id="pdf-toolbar-controls" class="embedded-pdf-controls">
+                  <div class="pdf-control-cluster">
+                    <select
+                      id="pdf-zoom-select"
+                      class="pdf-zoom-dropdown"
+                      title="Zoom Level"
+                    >
+                      <option value="fit-width" selected>Fit width</option>
+                      <option value="fit-height">Fit height</option>
+                      <option value="0.25">25%</option>
+                      <option value="0.5">50%</option>
+                      <option value="0.75">75%</option>
+                      <option value="1">100%</option>
+                      <option value="1.25">125%</option>
+                      <option value="1.5">150%</option>
+                      <option value="1.75">175%</option>
+                      <option value="2">200%</option>
+                      <option value="2.5">250%</option>
+                      <option value="3">300%</option>
+                      <option value="4">400%</option>
+                    </select>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="panel-content-area">
-              <div id="editor-search-dialog" class="editor-search-dialog" hidden>
-                <div class="search-input-wrapper">
-                  <input id="editor-search-input" type="text" class="search-input-field" placeholder="Find" spellcheck="false" autocomplete="off">
-                  <button id="editor-search-clear-button" class="search-tool-button search-clear-button" title="Clear text" aria-label="Clear text" hidden>
-                    <img src="../../assets/icons/clear.svg" alt="" class="search-button-icon">
+                  <div class="pdf-control-cluster">
+                    <input
+                      type="text"
+                      id="pdf-page-number-input"
+                      class="pdf-page-input"
+                      value="1"
+                      title="Current Page"
+                    />
+                    <span id="pdf-page-total-label" class="pdf-page-total"
+                      >/ 0</span
+                    >
+                  </div>
+                  <button
+                    id="pdf-print-action-button"
+                    class="pdf-tool-button"
+                    title="Print PDF"
+                    aria-label="Print PDF"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                      <path
+                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                      ></path>
+                      <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
                   </button>
                 </div>
-                <button id="editor-search-case-button" class="search-tool-button search-toggle-button" title="Match case" aria-label="Match case" aria-pressed="false">Aa</button>
-                <span id="editor-search-counter" class="search-counter-label">0 / 0</span>
-                <div class="search-nav-cluster">
-                  <button id="editor-search-prev-button" class="search-tool-button" title="Previous coincidence" aria-label="Previous coincidence">
-                    <img src="../../assets/icons/arrow-up.svg" alt="" class="search-button-icon">
-                  </button>
-                  <button id="editor-search-next-button" class="search-tool-button" title="Next coincidence" aria-label="Next coincidence">
-                    <img src="../../assets/icons/arrow-down.svg" alt="" class="search-button-icon">
-                  </button>
-                </div>
-                <button id="editor-search-close-button" class="search-tool-button search-close-button" title="Close" aria-label="Close">
-                  <img src="../../assets/icons/close.svg" alt="" class="search-button-icon">
-                </button>
               </div>
 
-              <div id="text-editor-container" class="editor-host">
-                <div id="editor-line-gutter" class="editor-gutter"></div>
-                <div class="editor-textarea-wrapper">
-                  <div id="editor-search-backdrop" class="editor-search-backdrop" aria-hidden="true"></div>
-                  <textarea id="editor-textarea" class="code-textarea" spellcheck="false" autocomplete="off" wrap="on"></textarea>
-                </div>
-              </div>
-            </div>
+              <div class="panel-content-area">
+                <div id="pdf-viewer-tab-pane" class="tab-pane active-pane">
+                  <div
+                    id="pdf-message-overlay"
+                    class="pdf-overlay-message-wrapper hidden"
+                  >
+                    <div class="pdf-status-card">
+                      <span id="pdf-message-label" class="pdf-status-text"
+                        >Generating document.pdf...</span
+                      >
+                    </div>
+                  </div>
 
-            <button id="left-panel-collapse-button" class="panel-toggle-handle collapse-to-left" title="Toggle left panel" aria-label="Toggle left panel">
-              <img id="left-panel-arrow-icon" src="../../assets/icons/arrow-left.svg" alt="" class="toggle-arrow-icon">
-            </button>
-          </div>
-
-          <div id="right-panel" class="workspace-panel">
-            <button id="right-panel-collapse-button" class="panel-toggle-handle collapse-to-right" title="Toggle right panel" aria-label="Toggle right panel">
-              <img id="right-panel-arrow-icon" src="../../assets/icons/arrow-right.svg" alt="" class="toggle-arrow-icon">
-            </button>
-
-            <div class="panel-tab-bar">
-              <button id="tab-document-pdf" class="floating-tab-button active-tab">document.pdf</button>
-              <button id="tab-conversion-log" class="floating-tab-button">conversion.log</button>
-
-              <div id="pdf-toolbar-controls" class="embedded-pdf-controls">
-                <div class="pdf-control-cluster">
-                  <select id="pdf-zoom-select" class="pdf-zoom-dropdown" title="Zoom Level">
-                    <option value="fit-width" selected>Fit width</option>
-                    <option value="fit-height">Fit height</option>
-                    <option value="0.25">25%</option>
-                    <option value="0.5">50%</option>
-                    <option value="0.75">75%</option>
-                    <option value="1">100%</option>
-                    <option value="1.25">125%</option>
-                    <option value="1.5">150%</option>
-                    <option value="1.75">175%</option>
-                    <option value="2">200%</option>
-                    <option value="2.5">250%</option>
-                    <option value="3">300%</option>
-                    <option value="4">400%</option>
-                  </select>
-                </div>
-                <div class="pdf-control-cluster">
-                  <input type="text" id="pdf-page-number-input" class="pdf-page-input" value="1" title="Current Page">
-                  <span id="pdf-page-total-label" class="pdf-page-total">/ 0</span>
-                </div>
-                <button id="pdf-print-action-button" class="pdf-tool-button" title="Print PDF" aria-label="Print PDF">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                    <rect x="6" y="14" width="12" height="8"></rect>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="panel-content-area">
-              <div id="pdf-viewer-tab-pane" class="tab-pane active-pane">
-                <div id="pdf-message-overlay" class="pdf-overlay-message-wrapper hidden">
-                  <div class="pdf-status-card">
-                    <span id="pdf-message-label" class="pdf-status-text">Generating document.pdf...</span>
+                  <div id="pdf-viewport-container" class="pdf-layers-host">
+                    <div id="layer-1" class="pdf-layer is-front"></div>
+                    <div id="layer-2" class="pdf-layer is-back hidden"></div>
                   </div>
                 </div>
 
-                <div id="pdf-viewport-container" class="pdf-layers-host">
-                  <div id="layer-1" class="pdf-layer is-front"></div>
-                  <div id="layer-2" class="pdf-layer is-back hidden"></div>
+                <div id="conversion-log-tab-pane" class="tab-pane hidden">
+                  <pre
+                    id="conversion-log-viewer"
+                    class="conversion-log-block"
+                  ></pre>
                 </div>
-              </div>
-
-              <div id="conversion-log-tab-pane" class="tab-pane hidden">
-                <pre id="conversion-log-viewer" class="conversion-log-block"></pre>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <div id="application-error-modal" class="modal-dialog-backdrop" hidden>
-        <div class="error-modal-dialog">
-          <div class="error-modal-header">
-            <h3 id="error-modal-title" class="error-modal-heading">Error</h3>
-            <button id="error-modal-close-icon" class="modal-close-icon-button" aria-label="Close">&times;</button>
-          </div>
-          <div class="error-modal-body">
-            <p id="error-modal-message" class="error-modal-description"></p>
-            <pre id="error-modal-stack" class="code-output-block" hidden></pre>
-          </div>
-          <div class="error-modal-footer">
-            <button id="error-modal-confirm-button" class="action-button action-primary-button">Dismiss</button>
+        <div id="application-error-modal" class="modal-dialog-backdrop" hidden>
+          <div class="error-modal-dialog">
+            <div class="error-modal-header">
+              <h3 id="error-modal-title" class="error-modal-heading">Error</h3>
+              <button
+                id="error-modal-close-icon"
+                class="modal-close-icon-button"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <div class="error-modal-body">
+              <p id="error-modal-message" class="error-modal-description"></p>
+              <pre
+                id="error-modal-stack"
+                class="code-output-block"
+                hidden
+              ></pre>
+            </div>
+            <div class="error-modal-footer">
+              <button
+                id="error-modal-confirm-button"
+                class="action-button action-primary-button"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
-  </div>
+      </main>
+    </div>
 
-  <script type="module" src="scripts/app.js"></script>
-</body>
+    <script type="module" src="scripts/app.js"></script>
+  </body>
 </html>

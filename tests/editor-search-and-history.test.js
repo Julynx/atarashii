@@ -12,7 +12,10 @@ const os = require("node:os");
 
 describe("Editor Search and History Integration", () => {
   it("verifies search dialog, coincidence navigation, and undo/redo operations", async () => {
-    const testRunnerScript = path.join(os.tmpdir(), `atarashii-search-test-${Date.now()}.js`);
+    const testRunnerScript = path.join(
+      os.tmpdir(),
+      `atarashii-search-test-${Date.now()}.js`,
+    );
     const scriptContent = `
       const { app, BrowserWindow, protocol } = require("electron");
       const path = require("path");
@@ -37,6 +40,12 @@ describe("Editor Search and History Integration", () => {
         registerIpcHandlers(win, dummyLogger, dummyConsent, dummyConverter);
 
         const tempDir = fs.mkdtempSync(path.join(app.getPath("temp"), "test-search-run-"));
+        app.setPath("userData", path.join(tempDir, "user-data"));
+
+        win.webContents.on("console-message", (event) => {
+          console.log("[Renderer]", event.message);
+        });
+
         win.loadFile(path.join("${path.join(__dirname, "..", "src", "renderer", "index.html").replace(/\\/g, "\\\\")}"));
 
         win.webContents.on("did-finish-load", async () => {
@@ -174,6 +183,9 @@ describe("Editor Search and History Integration", () => {
                 const markdownTabButton = document.getElementById("tab-document-markdown");
 
                 cssTabButton.click();
+                while (!cssTabButton.classList.contains("active-tab")) {
+                  await new Promise((resolve) => setTimeout(resolve, 50));
+                }
                 const initialCssContent = textarea.value;
                 textarea.value = initialCssContent + "\\\\nh1 { color: blue; }";
                 textarea.dispatchEvent(new Event("input"));
@@ -182,7 +194,27 @@ describe("Editor Search and History Integration", () => {
                 const cssReverted = textarea.value === initialCssContent;
 
                 markdownTabButton.click();
+                while (!markdownTabButton.classList.contains("active-tab")) {
+                  await new Promise((resolve) => setTimeout(resolve, 50));
+                }
                 const markdownRetained = textarea.value.includes("Extra appended line.");
+
+                const formatMenuItem = document.getElementById("editor-menu-format");
+                const hasFormatMenu = formatMenuItem !== null;
+                const formatText = formatMenuItem ? formatMenuItem.textContent : "";
+                const hasFormatShortcut = formatText.includes("Format") && formatText.includes("Shift+Alt+F");
+
+                const unformattedMarkdown = "#   Messy Title   \\\\n\\\\nSome unformatted text.   ";
+                textarea.value = unformattedMarkdown;
+                textarea.dispatchEvent(new Event("input"));
+
+                await textEditorInstance.flushPendingSave();
+                const isSavePreservingUnformatted = textarea.value === unformattedMarkdown;
+
+                formatMenuItem.click();
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const contentAfterFormat = textarea.value;
+                const isFormatWorking = contentAfterFormat.includes("# Messy Title") && !contentAfterFormat.includes("   \\\\n");
 
                 return {
                   ok: true,
@@ -222,6 +254,10 @@ describe("Editor Search and History Integration", () => {
                   isKeyRedoWorking,
                   cssReverted,
                   markdownRetained,
+                  hasFormatMenu,
+                  hasFormatShortcut,
+                  isSavePreservingUnformatted,
+                  isFormatWorking,
                 };
               })()
             \`);
@@ -261,7 +297,11 @@ describe("Editor Search and History Integration", () => {
               testResult.isKeyUndoWorking &&
               testResult.isKeyRedoWorking &&
               testResult.cssReverted &&
-              testResult.markdownRetained;
+              testResult.markdownRetained &&
+              testResult.hasFormatMenu &&
+              testResult.hasFormatShortcut &&
+              testResult.isSavePreservingUnformatted &&
+              testResult.isFormatWorking;
 
             fs.rmSync(tempDir, { recursive: true, force: true });
             app.exit(allPassed ? 0 : 1);
@@ -307,40 +347,156 @@ describe("Editor Search and History Integration", () => {
           assert.ok(match, "Output must contain successful test result");
           const parsed = JSON.parse(match[0]);
 
-          assert.ok(parsed.isSearchButtonLeftOfZoom, "Search button must be located to the left of +/- zoom buttons");
-          assert.ok(parsed.initialDialogHidden, "Search dialog must be initially hidden");
-          assert.ok(parsed.dialogOpened, "Search dialog must become visible when search button is clicked");
-          assert.ok(parsed.isPositionedTopRight, "Search dialog must be positioned in the top right corner of content pane");
-          assert.ok(parsed.initialCaseOff, "Case sensitive button (Aa) must be off by default");
-          assert.equal(parsed.counterAtStart, "1 / 3", "Search counter must show 1 / 3 with first coincidence as default");
-          assert.equal(parsed.totalMatchesInitial, 3, "All 3 coincidences must be highlighted");
-          assert.equal(parsed.activeMatchesInitial, 1, "Exactly 1 coincidence must have active highlight");
-          assert.equal(parsed.inactiveMatchesInitial, 2, "Inactive coincidences must have fainter highlight");
-          assert.equal(parsed.counterAfterNext, "2 / 3", "Next button must advance to coincidence 2");
-          assert.equal(parsed.counterAfterNextTwo, "3 / 3", "Next button must advance to coincidence 3");
-          assert.equal(parsed.counterAfterWrapNext, "1 / 3", "Next button must wrap around to coincidence 1");
-          assert.equal(parsed.counterAfterPrev, "3 / 3", "Previous button must wrap to coincidence 3");
-          assert.ok(parsed.isCaseToggledOn, "Case sensitive button must toggle active");
-          assert.equal(parsed.counterAfterCaseOn, "1 / 2", "Case sensitive search must match exact case");
-          assert.equal(parsed.counterAfterCaseOff, "1 / 3", "Toggling case sensitivity off must restore case-insensitive matches");
-          assert.ok(parsed.isClearButtonVisible, "Clear button must be visible when text is entered");
-          assert.ok(parsed.isInputCleared, "Clear button must clear text field");
-          assert.equal(parsed.counterAfterClear, "0 / 0", "Counter must reset to 0 / 0 after clearing");
-          assert.ok(parsed.isDialogClosed, "Close button must hide search dialog");
-          assert.equal(parsed.matchesAfterClose, 0, "Closing search dialog must clear highlights");
-          assert.ok(parsed.hasUndoMenu, "Dropdown menu must contain Undo option");
-          assert.ok(parsed.hasRedoMenu, "Dropdown menu must contain Redo option");
+          assert.ok(
+            parsed.isSearchButtonLeftOfZoom,
+            "Search button must be located to the left of +/- zoom buttons",
+          );
+          assert.ok(
+            parsed.initialDialogHidden,
+            "Search dialog must be initially hidden",
+          );
+          assert.ok(
+            parsed.dialogOpened,
+            "Search dialog must become visible when search button is clicked",
+          );
+          assert.ok(
+            parsed.isPositionedTopRight,
+            "Search dialog must be positioned in the top right corner of content pane",
+          );
+          assert.ok(
+            parsed.initialCaseOff,
+            "Case sensitive button (Aa) must be off by default",
+          );
+          assert.equal(
+            parsed.counterAtStart,
+            "1 / 3",
+            "Search counter must show 1 / 3 with first coincidence as default",
+          );
+          assert.equal(
+            parsed.totalMatchesInitial,
+            3,
+            "All 3 coincidences must be highlighted",
+          );
+          assert.equal(
+            parsed.activeMatchesInitial,
+            1,
+            "Exactly 1 coincidence must have active highlight",
+          );
+          assert.equal(
+            parsed.inactiveMatchesInitial,
+            2,
+            "Inactive coincidences must have fainter highlight",
+          );
+          assert.equal(
+            parsed.counterAfterNext,
+            "2 / 3",
+            "Next button must advance to coincidence 2",
+          );
+          assert.equal(
+            parsed.counterAfterNextTwo,
+            "3 / 3",
+            "Next button must advance to coincidence 3",
+          );
+          assert.equal(
+            parsed.counterAfterWrapNext,
+            "1 / 3",
+            "Next button must wrap around to coincidence 1",
+          );
+          assert.equal(
+            parsed.counterAfterPrev,
+            "3 / 3",
+            "Previous button must wrap to coincidence 3",
+          );
+          assert.ok(
+            parsed.isCaseToggledOn,
+            "Case sensitive button must toggle active",
+          );
+          assert.equal(
+            parsed.counterAfterCaseOn,
+            "1 / 2",
+            "Case sensitive search must match exact case",
+          );
+          assert.equal(
+            parsed.counterAfterCaseOff,
+            "1 / 3",
+            "Toggling case sensitivity off must restore case-insensitive matches",
+          );
+          assert.ok(
+            parsed.isClearButtonVisible,
+            "Clear button must be visible when text is entered",
+          );
+          assert.ok(
+            parsed.isInputCleared,
+            "Clear button must clear text field",
+          );
+          assert.equal(
+            parsed.counterAfterClear,
+            "0 / 0",
+            "Counter must reset to 0 / 0 after clearing",
+          );
+          assert.ok(
+            parsed.isDialogClosed,
+            "Close button must hide search dialog",
+          );
+          assert.equal(
+            parsed.matchesAfterClose,
+            0,
+            "Closing search dialog must clear highlights",
+          );
+          assert.ok(
+            parsed.hasUndoMenu,
+            "Dropdown menu must contain Undo option",
+          );
+          assert.ok(
+            parsed.hasRedoMenu,
+            "Dropdown menu must contain Redo option",
+          );
           assert.ok(parsed.hasUndoShortcut, "Undo menu item must show Ctrl+Z");
           assert.ok(parsed.hasRedoShortcut, "Redo menu item must show Ctrl+Y");
-          assert.ok(parsed.isMenuUndoWorking, "Clicking Undo in menu must revert edits");
-          assert.ok(parsed.isMenuRedoWorking, "Clicking Redo in menu must restore edits");
-          assert.ok(parsed.isKeyUndoWorking, "Ctrl+Z keyboard shortcut must undo edits");
-          assert.ok(parsed.isKeyRedoWorking, "Ctrl+Y keyboard shortcut must redo edits");
+          assert.ok(
+            parsed.isMenuUndoWorking,
+            "Clicking Undo in menu must revert edits",
+          );
+          assert.ok(
+            parsed.isMenuRedoWorking,
+            "Clicking Redo in menu must restore edits",
+          );
+          assert.ok(
+            parsed.isKeyUndoWorking,
+            "Ctrl+Z keyboard shortcut must undo edits",
+          );
+          assert.ok(
+            parsed.isKeyRedoWorking,
+            "Ctrl+Y keyboard shortcut must redo edits",
+          );
           assert.ok(parsed.cssReverted, "CSS document must undo independently");
-          assert.ok(parsed.markdownRetained, "Markdown document must retain its separate history buffer");
+          assert.ok(
+            parsed.markdownRetained,
+            "Markdown document must retain its separate history buffer",
+          );
+          assert.ok(
+            parsed.hasFormatMenu,
+            "Dropdown menu must contain Format option",
+          );
+          assert.ok(
+            parsed.hasFormatShortcut,
+            "Format menu item must show Shift+Alt+F",
+          );
+          assert.ok(
+            parsed.isSavePreservingUnformatted,
+            "Saving must preserve unformatted content",
+          );
+          assert.ok(
+            parsed.isFormatWorking,
+            "Clicking Format menu item must format content",
+          );
           resolve();
         } else {
-          reject(new Error(`Test failed with exit code ${exitCode}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}`));
+          reject(
+            new Error(
+              `Test failed with exit code ${exitCode}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}`,
+            ),
+          );
         }
       });
     });

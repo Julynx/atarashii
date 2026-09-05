@@ -1,6 +1,6 @@
 /**
  * @module text-editor
- * Source text editor component managing document tabs, line numbers, indentation, automated formatting, search, and undo/redo history.
+ * Source text editor component managing document tabs, line numbers, indentation, manual formatting, search, and undo/redo history.
  */
 
 import { createEditorSearch } from "./editor-search.js";
@@ -15,7 +15,9 @@ const AUTOSAVE_DEBOUNCE_MILLISECONDS = 500;
  */
 export function createTextEditor(errorModal) {
   const textareaElement = document.getElementById("editor-textarea");
-  const searchBackdropElement = document.getElementById("editor-search-backdrop");
+  const searchBackdropElement = document.getElementById(
+    "editor-search-backdrop",
+  );
   const lineGutterElement = document.getElementById("editor-line-gutter");
   const markdownTabButton = document.getElementById("tab-document-markdown");
   const cssTabButton = document.getElementById("tab-document-css");
@@ -24,13 +26,36 @@ export function createTextEditor(errorModal) {
 
   const zoomInButton = document.getElementById("editor-zoom-in-button");
   const zoomOutButton = document.getElementById("editor-zoom-out-button");
-  const optionsMenuButton = document.getElementById("editor-options-menu-button");
+  const optionsMenuButton = document.getElementById(
+    "editor-options-menu-button",
+  );
   const optionsDropdown = document.getElementById("editor-options-dropdown");
-  const toggleLineWrapButton = document.getElementById("editor-toggle-linewrap");
+  const toggleLineWrapButton = document.getElementById(
+    "editor-toggle-linewrap",
+  );
   const undoMenuItem = document.getElementById("editor-menu-undo");
   const redoMenuItem = document.getElementById("editor-menu-redo");
+  const formatMenuItem = document.getElementById("editor-menu-format");
 
-  const searchController = createEditorSearch(textareaElement, searchBackdropElement);
+  const lineMeasurerElement = document.createElement("div");
+  lineMeasurerElement.setAttribute("aria-hidden", "true");
+  lineMeasurerElement.style.position = "absolute";
+  lineMeasurerElement.style.visibility = "hidden";
+  lineMeasurerElement.style.pointerEvents = "none";
+  lineMeasurerElement.style.top = "-99999px";
+  lineMeasurerElement.style.left = "-99999px";
+  lineMeasurerElement.style.overflow = "hidden";
+  lineMeasurerElement.style.fontFamily = 'Consolas, "Courier New", monospace';
+  lineMeasurerElement.style.tabSize = "2";
+  lineMeasurerElement.style.whiteSpace = "pre-wrap";
+  lineMeasurerElement.style.wordBreak = "break-word";
+  lineMeasurerElement.style.boxSizing = "border-box";
+  document.body.appendChild(lineMeasurerElement);
+
+  const searchController = createEditorSearch(
+    textareaElement,
+    searchBackdropElement,
+  );
   const markdownHistory = createDocumentHistoryBuffer("");
   const cssHistory = createDocumentHistoryBuffer("");
 
@@ -72,6 +97,40 @@ export function createTextEditor(errorModal) {
   }
 
   /**
+   * Computes the rendered pixel height for each document line.
+   * @param {string[]} textLines - Array of string lines from the editor textarea.
+   * @param {number} calculatedLineHeight - Single un-wrapped line height in pixels.
+   * @returns {number[]} Array containing the rendered height in pixels for each line.
+   */
+  function measureLineHeights(textLines, calculatedLineHeight) {
+    if (!isLineWrapEnabled || textareaElement.clientWidth === 0) {
+      return new Array(textLines.length).fill(calculatedLineHeight);
+    }
+
+    lineMeasurerElement.style.fontSize = `${editorFontSize}px`;
+    lineMeasurerElement.style.lineHeight = `${calculatedLineHeight}px`;
+    lineMeasurerElement.style.width = `${textareaElement.clientWidth}px`;
+    lineMeasurerElement.style.padding = "0 14px";
+
+    const fragment = document.createDocumentFragment();
+    for (let index = 0; index < textLines.length; index += 1) {
+      const lineDivision = document.createElement("div");
+      lineDivision.textContent = textLines[index] || "\u200b";
+      fragment.appendChild(lineDivision);
+    }
+    lineMeasurerElement.replaceChildren(fragment);
+
+    const measuredHeights = [];
+    const children = lineMeasurerElement.children;
+    for (let index = 0; index < children.length; index += 1) {
+      measuredHeights.push(
+        children[index].offsetHeight || calculatedLineHeight,
+      );
+    }
+    return measuredHeights;
+  }
+
+  /**
    * Applies font size and proportional line height to textarea, backdrop, and line gutter.
    * @returns {void}
    */
@@ -84,12 +143,8 @@ export function createTextEditor(errorModal) {
     lineGutterElement.style.fontSize = `${editorFontSize}px`;
     lineGutterElement.style.lineHeight = `${calculatedLineHeight}px`;
 
-    const gutterLines = lineGutterElement.querySelectorAll(".editor-gutter-line");
-    gutterLines.forEach((lineElement) => {
-      lineElement.style.height = `${calculatedLineHeight}px`;
-    });
-
     searchController.synchronizeLayout();
+    refreshLineNumbers();
   }
 
   /**
@@ -113,31 +168,39 @@ export function createTextEditor(errorModal) {
       }
     }
     searchController.synchronizeLayout();
+    refreshLineNumbers();
   }
 
   /**
-   * Refreshes the line numbers in the editor gutter.
+   * Refreshes line numbers in the gutter with heights corresponding to wrapped lines.
    * @returns {void}
    */
   function refreshLineNumbers() {
-    const totalLines = textareaElement.value.split("\n").length;
-    const currentGutterCount = lineGutterElement.children.length;
-
-    if (totalLines === currentGutterCount) {
-      return;
-    }
-
+    const textLines = textareaElement.value.split("\n");
+    const totalLines = textLines.length;
     const calculatedLineHeight = Math.round(editorFontSize * 1.54);
-    const fragment = document.createDocumentFragment();
-    for (let lineNumber = 1; lineNumber <= totalLines; lineNumber += 1) {
-      const lineDiv = document.createElement("div");
-      lineDiv.className = "editor-gutter-line";
-      lineDiv.style.height = `${calculatedLineHeight}px`;
-      lineDiv.textContent = String(lineNumber);
-      fragment.appendChild(lineDiv);
-    }
+    const lineHeights = measureLineHeights(textLines, calculatedLineHeight);
 
-    lineGutterElement.replaceChildren(fragment);
+    const existingChildrenCount = lineGutterElement.children.length;
+    if (existingChildrenCount !== totalLines) {
+      const fragment = document.createDocumentFragment();
+      for (let lineNumber = 1; lineNumber <= totalLines; lineNumber += 1) {
+        const lineDiv = document.createElement("div");
+        lineDiv.className = "editor-gutter-line";
+        lineDiv.textContent = String(lineNumber);
+        lineDiv.style.height = `${lineHeights[lineNumber - 1]}px`;
+        fragment.appendChild(lineDiv);
+      }
+      lineGutterElement.replaceChildren(fragment);
+    } else {
+      for (let index = 0; index < totalLines; index += 1) {
+        const lineDiv = lineGutterElement.children[index];
+        const targetHeight = `${lineHeights[index]}px`;
+        if (lineDiv.style.height !== targetHeight) {
+          lineDiv.style.height = targetHeight;
+        }
+      }
+    }
   }
 
   /**
@@ -183,7 +246,10 @@ export function createTextEditor(errorModal) {
     }
 
     textareaElement.value = previousState.content;
-    textareaElement.setSelectionRange(previousState.selectionStart, previousState.selectionEnd);
+    textareaElement.setSelectionRange(
+      previousState.selectionStart,
+      previousState.selectionEnd,
+    );
 
     if (activeFileType === "markdown") {
       markdownBuffer = previousState.content;
@@ -214,7 +280,10 @@ export function createTextEditor(errorModal) {
     }
 
     textareaElement.value = nextState.content;
-    textareaElement.setSelectionRange(nextState.selectionStart, nextState.selectionEnd);
+    textareaElement.setSelectionRange(
+      nextState.selectionStart,
+      nextState.selectionEnd,
+    );
 
     if (activeFileType === "markdown") {
       markdownBuffer = nextState.content;
@@ -230,7 +299,7 @@ export function createTextEditor(errorModal) {
   }
 
   /**
-   * Persists and auto-formats the active document.
+   * Persists the active document without modifying editor content.
    * @returns {Promise<void>}
    */
   async function performAutosave() {
@@ -238,8 +307,12 @@ export function createTextEditor(errorModal) {
     displaySaveIndicator("saving", "Saving...");
 
     const fileTypeToSave = activeFileType;
-    const fileNameToSave = fileTypeToSave === "markdown" ? activeMarkdownFileName : activeCssFileName;
-    const contentToSave = fileTypeToSave === "markdown" ? markdownBuffer : cssBuffer;
+    const fileNameToSave =
+      fileTypeToSave === "markdown"
+        ? activeMarkdownFileName
+        : activeCssFileName;
+    const contentToSave =
+      fileTypeToSave === "markdown" ? markdownBuffer : cssBuffer;
 
     try {
       const saveResponse = await window.atarashiiApi.saveProjectDocument({
@@ -259,30 +332,6 @@ export function createTextEditor(errorModal) {
         return;
       }
 
-      const formattedContent = saveResponse.formattedContent;
-      if (fileTypeToSave === "markdown") {
-        markdownBuffer = formattedContent;
-      } else {
-        cssBuffer = formattedContent;
-      }
-
-      if (activeFileType === fileTypeToSave && textareaElement.value !== formattedContent) {
-        const previousSelectionStart = textareaElement.selectionStart;
-        const previousSelectionEnd = textareaElement.selectionEnd;
-
-        textareaElement.value = formattedContent;
-        refreshLineNumbers();
-
-        const safeSelectionStart = Math.min(previousSelectionStart, formattedContent.length);
-        const safeSelectionEnd = Math.min(previousSelectionEnd, formattedContent.length);
-        textareaElement.setSelectionRange(safeSelectionStart, safeSelectionEnd);
-
-        const activeHistory = getActiveHistory();
-        activeHistory.pushSnapshot(formattedContent, safeSelectionStart, safeSelectionEnd, false);
-        updateMenuState();
-        searchController.refreshSearch();
-      }
-
       displaySaveIndicator("saved", "Saved");
     } catch (saveError) {
       displaySaveIndicator("saving", "Save error");
@@ -290,6 +339,75 @@ export function createTextEditor(errorModal) {
         title: "Unexpected Save Error",
         message: saveError.message,
         stack: saveError.stack,
+      });
+    }
+  }
+
+  /**
+   * Manually formats the active document and records undo history.
+   * @returns {Promise<void>}
+   */
+  async function formatActiveDocument() {
+    if (!currentProjectPath) {
+      return;
+    }
+
+    const unformattedContent = textareaElement.value;
+    try {
+      const formatResponse = await window.atarashiiApi.formatDocument({
+        content: unformattedContent,
+        fileType: activeFileType,
+      });
+
+      if (!formatResponse.ok) {
+        errorModal.show({
+          title: "Format Failure",
+          message: formatResponse.error.message,
+          stack: formatResponse.error.stack,
+        });
+        return;
+      }
+
+      const formattedContent = formatResponse.formattedContent;
+      if (formattedContent !== unformattedContent) {
+        const previousSelectionStart = textareaElement.selectionStart;
+        const previousSelectionEnd = textareaElement.selectionEnd;
+
+        textareaElement.value = formattedContent;
+        if (activeFileType === "markdown") {
+          markdownBuffer = formattedContent;
+        } else {
+          cssBuffer = formattedContent;
+        }
+
+        refreshLineNumbers();
+
+        const safeSelectionStart = Math.min(
+          previousSelectionStart,
+          formattedContent.length,
+        );
+        const safeSelectionEnd = Math.min(
+          previousSelectionEnd,
+          formattedContent.length,
+        );
+        textareaElement.setSelectionRange(safeSelectionStart, safeSelectionEnd);
+
+        const activeHistory = getActiveHistory();
+        activeHistory.pushSnapshot(
+          formattedContent,
+          safeSelectionStart,
+          safeSelectionEnd,
+          false,
+        );
+        updateMenuState();
+        searchController.refreshSearch();
+        scheduleAutosave();
+      }
+    } catch (formatError) {
+      errorModal.show({
+        title: "Unexpected Format Error",
+        message: formatError.message,
+        stack: formatError.stack,
       });
     }
   }
@@ -375,7 +493,8 @@ export function createTextEditor(errorModal) {
         textareaElement.selectionStart = selectionStart + 2;
         textareaElement.selectionEnd = selectionStart + 2;
       } else {
-        const lineStart = currentValue.lastIndexOf("\n", selectionStart - 1) + 1;
+        const lineStart =
+          currentValue.lastIndexOf("\n", selectionStart - 1) + 1;
         const lineEnd = currentValue.indexOf("\n", selectionEnd);
         const effectiveEnd = lineEnd === -1 ? currentValue.length : lineEnd;
         const targetBlock = currentValue.substring(lineStart, effectiveEnd);
@@ -390,7 +509,8 @@ export function createTextEditor(errorModal) {
           currentValue.substring(effectiveEnd);
 
         textareaElement.selectionStart = selectionStart + 2;
-        textareaElement.selectionEnd = selectionEnd + (indentedBlock.length - targetBlock.length);
+        textareaElement.selectionEnd =
+          selectionEnd + (indentedBlock.length - targetBlock.length);
       }
     } else {
       const lineStart = currentValue.lastIndexOf("\n", selectionStart - 1) + 1;
@@ -410,7 +530,7 @@ export function createTextEditor(errorModal) {
       textareaElement.selectionStart = Math.max(lineStart, selectionStart - 2);
       textareaElement.selectionEnd = Math.max(
         textareaElement.selectionStart,
-        selectionEnd - (targetBlock.length - dedentedBlock.length)
+        selectionEnd - (targetBlock.length - dedentedBlock.length),
       );
     }
 
@@ -419,7 +539,7 @@ export function createTextEditor(errorModal) {
       textareaElement.value,
       textareaElement.selectionStart,
       textareaElement.selectionEnd,
-      false
+      false,
     );
 
     onTextareaInput();
@@ -431,6 +551,16 @@ export function createTextEditor(errorModal) {
    * @returns {void}
    */
   function handleEditorShortcuts(keyboardEvent) {
+    if (
+      keyboardEvent.shiftKey &&
+      keyboardEvent.altKey &&
+      keyboardEvent.key.toLowerCase() === "f"
+    ) {
+      keyboardEvent.preventDefault();
+      formatActiveDocument();
+      return;
+    }
+
     const isControlOrMeta = keyboardEvent.ctrlKey || keyboardEvent.metaKey;
     if (!isControlOrMeta) {
       return;
@@ -467,7 +597,7 @@ export function createTextEditor(errorModal) {
       updatedContent,
       textareaElement.selectionStart,
       textareaElement.selectionEnd,
-      true
+      true,
     );
 
     updateMenuState();
@@ -499,6 +629,30 @@ export function createTextEditor(errorModal) {
     });
   }
 
+  if (formatMenuItem) {
+    formatMenuItem.addEventListener("click", () => {
+      formatActiveDocument();
+      if (optionsDropdown) {
+        optionsDropdown.hidden = true;
+      }
+    });
+  }
+
+  let textareaResizeFrameIdentifier = null;
+  const textareaResizeObserver = new ResizeObserver(() => {
+    if (textareaResizeFrameIdentifier) {
+      cancelAnimationFrame(textareaResizeFrameIdentifier);
+    }
+    textareaResizeFrameIdentifier = requestAnimationFrame(() => {
+      textareaResizeFrameIdentifier = null;
+      searchController.synchronizeLayout();
+      if (isLineWrapEnabled) {
+        refreshLineNumbers();
+      }
+    });
+  });
+  textareaResizeObserver.observe(textareaElement);
+
   if (zoomInButton) {
     zoomInButton.addEventListener("click", () => {
       editorFontSize = Math.min(editorFontSize + 1, 28);
@@ -521,7 +675,10 @@ export function createTextEditor(errorModal) {
     });
 
     window.addEventListener("click", (windowClickEvent) => {
-      if (!optionsDropdown.hidden && !optionsDropdown.contains(windowClickEvent.target)) {
+      if (
+        !optionsDropdown.hidden &&
+        !optionsDropdown.contains(windowClickEvent.target)
+      ) {
         optionsDropdown.hidden = true;
       }
     });
@@ -585,5 +742,6 @@ export function createTextEditor(errorModal) {
       displaySaveIndicator("saved", "Saved");
     },
     flushPendingSave,
+    formatDocument: formatActiveDocument,
   };
 }

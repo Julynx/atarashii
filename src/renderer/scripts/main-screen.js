@@ -17,8 +17,12 @@ export function createMainScreen(screenManager, errorModal) {
   const leftPanelElement = document.getElementById("left-panel");
   const rightPanelElement = document.getElementById("right-panel");
 
-  const leftCollapseButton = document.getElementById("left-panel-collapse-button");
-  const rightCollapseButton = document.getElementById("right-panel-collapse-button");
+  const leftCollapseButton = document.getElementById(
+    "left-panel-collapse-button",
+  );
+  const rightCollapseButton = document.getElementById(
+    "right-panel-collapse-button",
+  );
 
   const leftArrowIcon = document.getElementById("left-panel-arrow-icon");
   const rightArrowIcon = document.getElementById("right-panel-arrow-icon");
@@ -46,7 +50,8 @@ export function createMainScreen(screenManager, errorModal) {
    * @returns {void}
    */
   function toggleLeftPanel() {
-    const isCurrentlyCollapsed = leftPanelElement.classList.contains("panel-collapsed");
+    const isCurrentlyCollapsed =
+      leftPanelElement.classList.contains("panel-collapsed");
     if (isCurrentlyCollapsed) {
       leftPanelElement.classList.remove("panel-collapsed");
       leftArrowIcon.src = "../../assets/icons/arrow-left.svg";
@@ -63,7 +68,8 @@ export function createMainScreen(screenManager, errorModal) {
    * @returns {void}
    */
   function toggleRightPanel() {
-    const isCurrentlyCollapsed = rightPanelElement.classList.contains("panel-collapsed");
+    const isCurrentlyCollapsed =
+      rightPanelElement.classList.contains("panel-collapsed");
     if (isCurrentlyCollapsed) {
       rightPanelElement.classList.remove("panel-collapsed");
       rightArrowIcon.src = "../../assets/icons/arrow-right.svg";
@@ -87,12 +93,14 @@ export function createMainScreen(screenManager, errorModal) {
       pdfPaneElement.classList.remove("hidden");
       logPaneElement.classList.add("hidden");
       pdfToolbarElement.classList.remove("hidden");
+      pdfToolbarElement.hidden = false;
     } else {
       logTabButton.classList.add("active-tab");
       pdfTabButton.classList.remove("active-tab");
       logPaneElement.classList.remove("hidden");
       pdfPaneElement.classList.add("hidden");
       pdfToolbarElement.classList.add("hidden");
+      pdfToolbarElement.hidden = true;
     }
   }
 
@@ -126,7 +134,7 @@ export function createMainScreen(screenManager, errorModal) {
       const readResult = await window.atarashiiApi.readProjectDocuments(
         projectMetadata.projectPath,
         projectMetadata.markdownFileName,
-        projectMetadata.cssFileName
+        projectMetadata.cssFileName,
       );
 
       if (!readResult.ok) {
