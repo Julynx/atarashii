@@ -16,7 +16,7 @@
       "text": "$(package) Build Installer",
       "command": "npm run dist",
       "tooltip": "Build Windows installer (Atarashii_Setup.exe).",
-      "color": "#93c5fd"
+      "color": "#59b1a7"
     }
   ]
 }
