@@ -1172,21 +1172,31 @@ html {
   pointer-events: none;
 }
 
+.code-textarea::-webkit-scrollbar,
 .pdf-layer::-webkit-scrollbar {
+  height: 8px;
   width: 8px;
 }
 
+.code-textarea::-webkit-scrollbar-track,
 .pdf-layer::-webkit-scrollbar-track {
   background: transparent;
 }
 
+.code-textarea::-webkit-scrollbar-thumb,
 .pdf-layer::-webkit-scrollbar-thumb {
   background: var(--dark-gray);
   border-radius: 4px;
 }
 
+.code-textarea::-webkit-scrollbar-thumb:hover,
 .pdf-layer::-webkit-scrollbar-thumb:hover {
   background: var(--gray);
+}
+
+.code-textarea::-webkit-scrollbar-corner,
+.pdf-layer::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .page-container {

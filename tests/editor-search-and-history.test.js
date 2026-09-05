@@ -216,6 +216,20 @@ describe("Editor Search and History Integration", () => {
                 const contentAfterFormat = textarea.value;
                 const isFormatWorking = contentAfterFormat.includes("# Messy Title") && !contentAfterFormat.includes("   \\\\n");
 
+                const styleRules = Array.from(document.styleSheets).flatMap((sheet) => {
+                  try {
+                    return Array.from(sheet.cssRules || []);
+                  } catch (_e) {
+                    return [];
+                  }
+                });
+                const hasUnifiedScrollbar = styleRules.some((rule) => {
+                  return (
+                    rule.selectorText &&
+                    rule.selectorText.includes(".code-textarea::-webkit-scrollbar")
+                  );
+                });
+
                 return {
                   ok: true,
                   isSearchButtonLeftOfZoom,
@@ -258,6 +272,7 @@ describe("Editor Search and History Integration", () => {
                   hasFormatShortcut,
                   isSavePreservingUnformatted,
                   isFormatWorking,
+                  hasUnifiedScrollbar,
                 };
               })()
             \`);
@@ -301,7 +316,8 @@ describe("Editor Search and History Integration", () => {
               testResult.hasFormatMenu &&
               testResult.hasFormatShortcut &&
               testResult.isSavePreservingUnformatted &&
-              testResult.isFormatWorking;
+              testResult.isFormatWorking &&
+              testResult.hasUnifiedScrollbar;
 
             fs.rmSync(tempDir, { recursive: true, force: true });
             app.exit(allPassed ? 0 : 1);
@@ -489,6 +505,10 @@ describe("Editor Search and History Integration", () => {
           assert.ok(
             parsed.isFormatWorking,
             "Clicking Format menu item must format content",
+          );
+          assert.ok(
+            parsed.hasUnifiedScrollbar,
+            "Editor must have unified scrollbar styling",
           );
           resolve();
         } else {

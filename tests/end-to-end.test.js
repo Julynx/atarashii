@@ -42,7 +42,7 @@ describe("End-to-End Workflow Verification", () => {
     assert.ok(fs.existsSync(path.join(projectPath, "assets")));
 
     const unformattedMarkdown = "#   Live Title   \n\nThis is sample text.   \n";
-    const formattedMarkdown = formatMarkdown(unformattedMarkdown, testLogger);
+    const formattedMarkdown = await formatMarkdown(unformattedMarkdown, testLogger);
     assert.ok(formattedMarkdown.includes("# Live Title"));
     assert.ok(!formattedMarkdown.includes("   \n"));
     fs.writeFileSync(path.join(projectPath, "document.md"), formattedMarkdown, "utf8");

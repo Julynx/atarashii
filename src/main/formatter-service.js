@@ -1,26 +1,19 @@
 /**
  * @module formatter-service
- * Source code auto-formatting service for Markdown and CSS documents.
+ * Source code auto-formatting service for Markdown and CSS documents using Prettier.
  */
 
-const { lint } = require("markdownlint/sync");
-const { applyFixes } = require("markdownlint");
 const prettier = require("prettier");
 
 /**
- * Formats Markdown text using markdownlint automated fixes.
+ * Formats Markdown text using Prettier.
  * @param {string} rawMarkdownText - Unformatted markdown source code.
  * @param {{warn: Function}} logger - Logging service.
- * @returns {string} Formatted markdown source code.
+ * @returns {Promise<string>} Formatted markdown source code.
  */
-function formatMarkdown(rawMarkdownText, logger) {
+async function formatMarkdown(rawMarkdownText, logger) {
   try {
-    const lintResults = lint({ strings: { source: rawMarkdownText } });
-    const fileFixes = lintResults.source;
-    if (!fileFixes || fileFixes.length === 0) {
-      return rawMarkdownText;
-    }
-    return applyFixes(rawMarkdownText, fileFixes);
+    return await prettier.format(rawMarkdownText, { parser: "markdown" });
   } catch (formattingError) {
     logger.warn(`Markdown formatting warning: ${formattingError.message}`);
     return rawMarkdownText;

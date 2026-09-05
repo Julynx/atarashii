@@ -1,6 +1,6 @@
 /**
  * @module formatter-service-test
- * Unit tests verifying markdownlint and prettier auto-formatting routines.
+ * Unit tests verifying markdown and css prettier auto-formatting routines.
  */
 
 const { describe, it } = require("node:test");
@@ -15,9 +15,9 @@ const dummyLogger = {
 };
 
 describe("Formatter Service", () => {
-  it("formats markdown using markdownlint fixes", () => {
+  it("formats markdown using prettier", async () => {
     const rawMarkdown = "#  Heading 1\n\nSome text with spaces   \n\n";
-    const formatted = formatMarkdown(rawMarkdown, dummyLogger);
+    const formatted = await formatMarkdown(rawMarkdown, dummyLogger);
 
     assert.ok(formatted.includes("# Heading 1"));
     assert.ok(!formatted.includes("spaces   "));
@@ -29,5 +29,19 @@ describe("Formatter Service", () => {
 
     assert.ok(formatted.includes("margin: 0;"));
     assert.ok(formatted.includes("color: red;"));
+  });
+
+  it("falls back to raw text and logs warning when markdown formatting fails", async () => {
+    let loggedWarning = "";
+    const warningLogger = {
+      warn(message) {
+        loggedWarning = message;
+      },
+    };
+
+    const invalidInput = null;
+    const result = await formatMarkdown(invalidInput, warningLogger);
+    assert.equal(result, null);
+    assert.ok(loggedWarning.includes("Markdown formatting warning"));
   });
 });

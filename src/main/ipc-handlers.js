@@ -234,7 +234,7 @@ function registerIpcHandlers(
       try {
         let formattedText = content;
         if (fileType === "markdown") {
-          formattedText = formatMarkdown(content, logger);
+          formattedText = await formatMarkdown(content, logger);
         } else if (fileType === "css") {
           formattedText = await formatCss(content, logger);
         }
