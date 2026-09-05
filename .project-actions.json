@@ -11,6 +11,12 @@
       "command": "npm run start:dev",
       "tooltip": "Launch the app with Chrome DevTools.",
       "color": "#93c4eb"
+    },
+    {
+      "text": "$(package) Build Installer",
+      "command": "npm run dist",
+      "tooltip": "Build Windows installer (Atarashii_Setup.exe).",
+      "color": "#93c5fd"
     }
   ]
 }

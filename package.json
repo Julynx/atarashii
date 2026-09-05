@@ -4,9 +4,15 @@
   "description": "Live editing Markdown to PDF desktop app",
   "main": "src/main/main.js",
   "scripts": {
+    "postinstall": "node scripts/ensure-electron.js",
     "start": "electron .",
     "start:dev": "electron . --devtools",
-    "test": "node --test \"tests/**/*.test.js\""
+    "test": "node --test \"tests/**/*.test.js\"",
+    "dist": "electron-builder --win",
+    "dist:win": "electron-builder --win",
+    "dist:dir": "electron-builder --win --dir",
+    "pack": "electron-builder --win --dir",
+    "build:installer": "electron-builder --win"
   },
   "keywords": [
     "markdown",
@@ -22,6 +28,46 @@
     "prettier": "^3.9.6"
   },
   "devDependencies": {
-    "electron": "^40.6.0"
+    "electron": "^40.6.0",
+    "electron-builder": "^26.15.3"
+  },
+  "overrides": {
+    "yauzl": "^3.3.1"
+  },
+  "build": {
+    "appId": "com.atarashii.app",
+    "productName": "Atarashii",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "config/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icons/app-icon.ico",
+      "artifactName": "Atarashii_Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Atarashii",
+      "uninstallDisplayName": "Atarashii",
+      "deleteAppDataOnUninstall": true,
+      "artifactName": "Atarashii_Setup.exe"
+    }
   }
 }
