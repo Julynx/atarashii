@@ -26,7 +26,7 @@
   ><br /><br />
 </p>
 
-![alt text](assets/images/screenshot.png)
+![alt text](https://github.com/Julynx/atarashii/blob/main/assets/images/screenshot.png)
 
 ## Features
 
