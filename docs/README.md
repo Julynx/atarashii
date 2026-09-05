@@ -5,7 +5,7 @@
   />
 </p>
 
-<h3 align="center">SmoothPDF</h3>
+<h3 align="center">Atarashii</h3>
 <p align="center">
   <i
     >A live Markdown to PDF editor with support for diagrams, custom CSS, and much more.</i
@@ -16,7 +16,7 @@
 
 <p align="center">
   <a
-    href="https://github.com/Julynx/atarashii/releases/latest/download/SmoothPDF_Setup.exe"
+    href="https://github.com/Julynx/atarashii/releases/latest/download/Atarashii_Setup.exe"
     target="_blank"
   >
     <img
