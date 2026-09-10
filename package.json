@@ -27,7 +27,11 @@
     "live-preview",
     "converter"
   ],
-  "author": "Atarashii",
+  "author": {
+  "name": "Julynx",
+  "email": "julicabria@outlook.com",
+  "url": "https://github.com/julynx/atarashii/"
+},
   "license": "ISC",
   "dependencies": {
     "chokidar": "^3.6.0",
