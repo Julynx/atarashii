@@ -27,6 +27,7 @@ const {
   writeProjectDocument,
 } = require("./project-service");
 const { formatMarkdown, formatCss } = require("./formatter-service");
+const { relaunchApplication } = require("./relaunch-service");
 
 /**
  * Serializes an error object into a renderer-friendly structure.
@@ -98,18 +99,7 @@ function registerIpcHandlers(
       const statuses = await checkRequirements(logger);
       const result = await installFirstMissingRequirement(statuses, logger);
       if (result.ok) {
-        logger.info(
-          "Relaunching application following successful dependency installation.",
-        );
-        if (process.env.APPIMAGE) {
-          app.relaunch({
-            execPath: process.env.APPIMAGE,
-            args: process.argv.slice(1),
-          });
-        } else {
-          app.relaunch();
-        }
-        app.exit(0);
+        relaunchApplication(logger);
       }
       return result;
     } catch (installError) {
