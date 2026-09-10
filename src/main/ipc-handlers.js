@@ -101,7 +101,14 @@ function registerIpcHandlers(
         logger.info(
           "Relaunching application following successful dependency installation.",
         );
-        app.relaunch();
+        if (process.env.APPIMAGE) {
+          app.relaunch({
+            execPath: process.env.APPIMAGE,
+            args: process.argv.slice(1),
+          });
+        } else {
+          app.relaunch();
+        }
         app.exit(0);
       }
       return result;
