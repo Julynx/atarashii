@@ -5,6 +5,8 @@
 
 const https = require("https");
 const { runCommand, probeCommand, formatCommandOutput } = require("./process-runner");
+const { refreshEnvironmentPath } = require("./environment");
+const { warmUpMarkdownConvert } = require("./warmup-service");
 
 const PYPI_METADATA_URL = "https://pypi.org/pypi/markdown-convert/json";
 const UPDATE_CHECK_TIMEOUT_MILLISECONDS = 8000;
@@ -123,7 +125,15 @@ async function installUpdate(logger) {
     return { ok: false, output: formattedError };
   }
 
-  logger.info("markdown-convert updated successfully.");
+  await refreshEnvironmentPath(logger);
+
+  const warmUpResult = await warmUpMarkdownConvert(logger);
+  if (!warmUpResult.ok) {
+    logger.error(`markdown-convert post-update warm-up failed:\n${warmUpResult.output}`);
+    return { ok: false, output: warmUpResult.output };
+  }
+
+  logger.info("markdown-convert updated and warmed up successfully.");
   return { ok: true };
 }
 

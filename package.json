@@ -7,12 +7,19 @@
     "postinstall": "node scripts/ensure-electron.js",
     "start": "electron .",
     "start:dev": "electron . --devtools",
-    "test": "node --test \"tests/**/*.test.js\"",
-    "dist": "electron-builder --win",
+    "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\"",
+    "dist": "electron-builder",
     "dist:win": "electron-builder --win",
-    "dist:dir": "electron-builder --win --dir",
-    "pack": "electron-builder --win --dir",
-    "build:installer": "electron-builder --win"
+    "dist:linux": "electron-builder --linux",
+    "dist:dir": "electron-builder --dir",
+    "dist:dir:win": "electron-builder --win --dir",
+    "dist:dir:linux": "electron-builder --linux --dir",
+    "pack": "electron-builder --dir",
+    "pack:win": "electron-builder --win --dir",
+    "pack:linux": "electron-builder --linux --dir",
+    "build:installer": "electron-builder",
+    "build:installer:win": "electron-builder --win",
+    "build:installer:linux": "electron-builder --linux"
   },
   "keywords": [
     "markdown",
@@ -56,6 +63,27 @@
       ],
       "icon": "assets/icons/app-icon.ico",
       "artifactName": "Atarashii_Setup.exe"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icons/app-icon.png",
+      "category": "Office",
+      "synopsis": "Live editing Markdown to PDF desktop app",
+      "description": "Live editing Markdown to PDF desktop app",
+      "artifactName": "Atarashii_${version}_${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

@@ -159,6 +159,7 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
       cwd: projectPath,
       windowsHide: true,
       shell: false,
+      detached: process.platform !== "win32",
     });
 
     activeProcess.stdout.on("data", (chunk) => {

@@ -182,6 +182,19 @@ function extractArchive(archiveFilePath, targetDirectory) {
 }
 
 /**
+ * Ensures executable file permissions on POSIX systems.
+ * @param {string} targetExecutablePath Absolute path to the executable file.
+ * @returns {void}
+ */
+function ensureExecutablePermissions(targetExecutablePath) {
+  if (process.platform !== "win32") {
+    try {
+      fs.chmodSync(targetExecutablePath, 0o755);
+    } catch {}
+  }
+}
+
+/**
  * Main execution orchestration for ensuring Electron binary presence.
  * @returns {Promise<void>}
  */
@@ -245,6 +258,8 @@ async function main() {
       `Electron executable was not found at expected location: ${destinationExecutablePath}`
     );
   }
+
+  ensureExecutablePermissions(destinationExecutablePath);
 
   const pathRecordFile = path.join(electronPackageDirectory, "path.txt");
   fs.writeFileSync(pathRecordFile, relativeExecutable, "utf-8");

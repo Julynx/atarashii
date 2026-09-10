@@ -8,7 +8,7 @@ const path = require("path");
 const { app, BrowserWindow, protocol, shell } = require("electron");
 
 const { createLogger } = require("./logger");
-const { refreshWindowsPath } = require("./environment");
+const { refreshEnvironmentPath } = require("./environment");
 const { createInstallConsentStore } = require("./install-consent");
 const { createConverterService } = require("./converter-service");
 const { registerIpcHandlers } = require("./ipc-handlers");
@@ -118,7 +118,7 @@ app.whenReady().then(async () => {
     }
   });
 
-  await refreshWindowsPath(applicationLogger);
+  await refreshEnvironmentPath(applicationLogger);
 
   const consentStore = createInstallConsentStore(
     path.join(app.getPath("userData"), "install-consent.json"),

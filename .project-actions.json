@@ -13,9 +13,15 @@
       "color": "#93c4eb"
     },
     {
-      "text": "$(package) Build Installer",
-      "command": "npm run dist",
-      "tooltip": "Build Windows installer (Atarashii_Setup.exe).",
+      "text": "$(package) Build Windows Installer",
+      "command": "npm run dist:win",
+      "tooltip": "Build installer for Windows.",
+      "color": "#59b1a7"
+    },
+    {
+      "text": "$(package) Build Linux Installer",
+      "command": "npm run dist:linux",
+      "tooltip": "Build installer for Linux.",
       "color": "#59b1a7"
     }
   ]
