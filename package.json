@@ -1,6 +1,6 @@
 {
   "name": "atarashii",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Live editing Markdown to PDF desktop app",
   "main": "src/main/main.js",
   "scripts": {
@@ -28,10 +28,10 @@
     "converter"
   ],
   "author": {
-  "name": "Julynx",
-  "email": "julicabria@outlook.com",
-  "url": "https://github.com/julynx/atarashii/"
-},
+    "name": "Julynx",
+    "email": "julicabria@outlook.com",
+    "url": "https://github.com/julynx/atarashii/"
+  },
   "license": "ISC",
   "dependencies": {
     "chokidar": "^3.6.0",
