@@ -23,7 +23,16 @@
       src="https://raw.githubusercontent.com/Julynx/julynx/refs/heads/main/assets/download.png"
       height="48"
     /> </a
-  ><br /><br />
+  >&nbsp;&nbsp;<a
+    href="https://github.com/Julynx/atarashii/releases/latest/download/Atarashii_Setup.appimage"
+    target="_blank"
+  >
+    <img
+      src="https://raw.githubusercontent.com/Julynx/julynx/refs/heads/main/assets/download-linux.png"
+      height="48"
+    />
+  </a>
+  <br /><br />
 </p>
 
 ![alt text](https://github.com/Julynx/atarashii/blob/main/assets/images/screenshot.png)
