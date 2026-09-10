@@ -1,5 +1,7 @@
 {
   "name": "atarashii",
+  "productName": "Atarashii",
+  "desktopName": "com.atarashii.app.desktop",
   "version": "1.0.3",
   "description": "Live editing Markdown to PDF desktop app",
   "main": "src/main/main.js",
