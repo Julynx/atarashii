@@ -131,7 +131,7 @@ html {
 .status-indicator-text {
   color: var(--light-gray);
   font-size: 14px;
-  margin-top: 16px;
+  margin-top: 0;
 }
 
 .activity-spinner {
