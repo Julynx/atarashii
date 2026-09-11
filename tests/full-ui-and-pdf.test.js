@@ -238,6 +238,44 @@ describe("Full UI and PDF Rendering Integration", () => {
                 const line1RewrappedHeight = gutter.children[0] ? gutter.children[0].offsetHeight : 0;
                 const isRewrappedCorrect = line1RewrappedHeight === line1WrappedHeight;
 
+                const frontLayer = state.currentFront;
+                for (let scrollStep = 100; scrollStep <= 5000; scrollStep += 600) {
+                  frontLayer.scrollTop = scrollStep;
+                  frontLayer.dispatchEvent(new Event("scroll"));
+                  await new Promise((resolve) => setTimeout(resolve, 15));
+                }
+                for (let scrollStep = 5000; scrollStep >= 2000; scrollStep -= 600) {
+                  frontLayer.scrollTop = scrollStep;
+                  frontLayer.dispatchEvent(new Event("scroll"));
+                  await new Promise((resolve) => setTimeout(resolve, 15));
+                }
+                frontLayer.dispatchEvent(new Event("scrollend"));
+                
+                const landingContainers = Array.from(frontLayer.querySelectorAll(".page-container")).filter((container) => {
+                  const containerTop = container.offsetTop;
+                  const containerBottom = containerTop + container.offsetHeight;
+                  return containerBottom >= frontLayer.scrollTop && containerTop <= frontLayer.scrollTop + frontLayer.clientHeight;
+                });
+
+                let settleTimeout = 3000;
+                while (landingContainers.some((c) => c.dataset.renderStatus === "rendering") && settleTimeout > 0) {
+                  await new Promise((resolve) => setTimeout(resolve, 100));
+                  settleTimeout -= 100;
+                }
+
+                const landingDetails = landingContainers.map((c) => ({
+                  page: c.dataset.pageNumber,
+                  status: c.dataset.renderStatus,
+                  hasCanvas: !!c.querySelector("canvas"),
+                  width: c.querySelector("canvas") ? c.querySelector("canvas").width : 0,
+                  top: c.offsetTop,
+                  height: c.offsetHeight,
+                }));
+                const isRapidScrollLandingRendered = landingContainers.length > 0 && landingContainers.every((container) => {
+                  const canvas = container.querySelector("canvas");
+                  return container.dataset.renderStatus === "rendered" && canvas && canvas.width > 0;
+                });
+
                 return {
                   ok: true,
                   initialWidth,
@@ -265,6 +303,10 @@ describe("Full UI and PDF Rendering Integration", () => {
                   isWrappedLineTaller,
                   isUnwrappedSingleLine,
                   isRewrappedCorrect,
+                  isRapidScrollLandingRendered,
+                  landingDetails,
+                  frontScrollTop: frontLayer.scrollTop,
+                  frontClientHeight: frontLayer.clientHeight,
                 };
               })()
             \`);
@@ -290,7 +332,8 @@ describe("Full UI and PDF Rendering Integration", () => {
                               testResult.isPdfToolbarRestoredInPdfTab &&
                               testResult.isWrappedLineTaller &&
                               testResult.isUnwrappedSingleLine &&
-                              testResult.isRewrappedCorrect;
+                              testResult.isRewrappedCorrect &&
+                              testResult.isRapidScrollLandingRendered;
             app.exit(allPassed ? 0 : 1);
           } catch (err) {
             console.error(err);
