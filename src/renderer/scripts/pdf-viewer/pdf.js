@@ -9,10 +9,11 @@ import { getUIElements, syncCurrentPageFromScroll } from "./ui.js";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "../../../../assets/vendor/pdf.worker.mjs",
-  import.meta.url
+  import.meta.url,
 ).href;
 
 const activeRenderTasks = new WeakMap();
+const pageRenderGenerations = new WeakMap();
 let activeNavigationIdentifier = 0;
 
 /**
@@ -21,7 +22,9 @@ let activeNavigationIdentifier = 0;
  * @returns {Promise<import("pdfjs-dist").PDFDocumentProxy>} PDF document proxy.
  */
 export async function loadPdfDocument(filePath) {
-  const loadingTask = pdfjsLib.getDocument(`safe-file://${encodeURIComponent(filePath)}`);
+  const loadingTask = pdfjsLib.getDocument(
+    `safe-file://${encodeURIComponent(filePath)}`,
+  );
   return await loadingTask.promise;
 }
 
@@ -55,7 +58,10 @@ function createLinkService(pdfDocument) {
         pdfDocument
           .getDestination(destination)
           .then((explicitDestination) => {
-            if (Array.isArray(explicitDestination) && explicitDestination.length > 0) {
+            if (
+              Array.isArray(explicitDestination) &&
+              explicitDestination.length > 0
+            ) {
               const pageReference = explicitDestination[0];
               pdfDocument
                 .getPageIndex(pageReference)
@@ -63,7 +69,10 @@ function createLinkService(pdfDocument) {
                   jumpToPage(pageIndex + 1, explicitDestination);
                 })
                 .catch((indexError) => {
-                  console.error("Failed resolving destination index:", indexError);
+                  console.error(
+                    "Failed resolving destination index:",
+                    indexError,
+                  );
                 });
             }
           })
@@ -127,7 +136,9 @@ function attachAnnotationClickHandler(annotationLayerDiv, pdfDocument) {
     }
 
     try {
-      const parsedDestination = JSON.parse(decodeURIComponent(href.substring(1)));
+      const parsedDestination = JSON.parse(
+        decodeURIComponent(href.substring(1)),
+      );
       if (Array.isArray(parsedDestination) && parsedDestination.length > 0) {
         const pageRef = parsedDestination[0];
         pdfDocument
@@ -145,7 +156,10 @@ function attachAnnotationClickHandler(annotationLayerDiv, pdfDocument) {
         pdfDocument
           .getDestination(namedDestination)
           .then((resolvedDestination) => {
-            if (Array.isArray(resolvedDestination) && resolvedDestination.length > 0) {
+            if (
+              Array.isArray(resolvedDestination) &&
+              resolvedDestination.length > 0
+            ) {
               const pageRef = resolvedDestination[0];
               pdfDocument
                 .getPageIndex(pageRef)
@@ -177,7 +191,7 @@ export function calculatePageScale(
   unscaledViewport,
   containerWidth,
   containerHeight,
-  zoomMode
+  zoomMode,
 ) {
   let computedScale = 1.0;
   if (zoomMode === "fit-width") {
@@ -217,7 +231,7 @@ export function jumpToPage(inputPage, destinationArray = null) {
   }
 
   const targetContainer = state.currentFront.querySelector(
-    `.page-container[data-page-number="${targetPageNumber}"]`
+    `.page-container[data-page-number="${targetPageNumber}"]`,
   );
 
   if (!targetContainer) {
@@ -226,10 +240,18 @@ export function jumpToPage(inputPage, destinationArray = null) {
 
   let targetScrollTop = targetContainer.offsetTop - 16;
 
-  if (destinationArray && Array.isArray(destinationArray) && destinationArray.length >= 2) {
+  if (
+    destinationArray &&
+    Array.isArray(destinationArray) &&
+    destinationArray.length >= 2
+  ) {
     const destinationType = destinationArray[1];
     let unscaledY = null;
-    if (destinationType && destinationType.name === "XYZ" && typeof destinationArray[3] === "number") {
+    if (
+      destinationType &&
+      destinationType.name === "XYZ" &&
+      typeof destinationArray[3] === "number"
+    ) {
       unscaledY = destinationArray[3];
     } else if (
       destinationType &&
@@ -249,7 +271,8 @@ export function jumpToPage(inputPage, destinationArray = null) {
       }
 
       const pixelHeight =
-        targetContainer.clientHeight || parseFloat(targetContainer.style.height);
+        targetContainer.clientHeight ||
+        parseFloat(targetContainer.style.height);
       const unscaledHeight = pixelHeight / scaleFactor;
 
       let yOffsetPoint = 0;
@@ -261,14 +284,15 @@ export function jumpToPage(inputPage, destinationArray = null) {
       targetScrollTop = targetContainer.offsetTop + yOffsetPixel - 16;
       targetScrollTop = Math.min(
         targetScrollTop,
-        targetContainer.offsetTop + pixelHeight - 16
+        targetContainer.offsetTop + pixelHeight - 16,
       );
     }
   }
 
   if (
     targetPageNumber === 1 &&
-    (!destinationArray || Math.abs(targetScrollTop - targetContainer.offsetTop + 16) < 10)
+    (!destinationArray ||
+      Math.abs(targetScrollTop - targetContainer.offsetTop + 16) < 10)
   ) {
     targetScrollTop = 0;
   }
@@ -314,14 +338,40 @@ export function jumpToPage(inputPage, destinationArray = null) {
 }
 
 /**
+ * Determines whether a page container is within active render distance of the viewport.
+ * @param {HTMLElement} pageContainer - Page container DOM element.
+ * @param {number} [bufferPixels=1400] - Margin above and below viewport.
+ * @returns {boolean} Whether container is within render buffer.
+ */
+function isContainerWithinRenderBuffer(pageContainer, bufferPixels = 1400) {
+  const layerElement = pageContainer.parentElement;
+  if (!layerElement) {
+    return false;
+  }
+  const visibleTop = layerElement.scrollTop - bufferPixels;
+  const visibleBottom =
+    layerElement.scrollTop + layerElement.clientHeight + bufferPixels;
+  const containerTop = pageContainer.offsetTop;
+  const containerBottom = containerTop + pageContainer.offsetHeight;
+
+  return containerBottom >= visibleTop && containerTop <= visibleBottom;
+}
+
+/**
  * Renders canvas, text, and annotations for a page container.
  * @param {HTMLElement} pageContainer - Target container DOM node.
  * @param {import("pdfjs-dist").PDFDocumentProxy} pdfDocument - PDF document instance.
+ * @param {boolean} [forceWithinBuffer=false] - Whether to bypass viewport buffer check.
  * @returns {Promise<void>}
  */
-export async function renderPageContainer(pageContainer, pdfDocument) {
+export async function renderPageContainer(
+  pageContainer,
+  pdfDocument,
+  forceWithinBuffer = false,
+) {
+  const existingCanvas = pageContainer.querySelector("canvas");
   if (
-    pageContainer.dataset.renderStatus === "rendered" ||
+    (pageContainer.dataset.renderStatus === "rendered" && existingCanvas) ||
     pageContainer.dataset.renderStatus === "rendering"
   ) {
     return;
@@ -332,30 +382,49 @@ export async function renderPageContainer(pageContainer, pdfDocument) {
     return;
   }
 
+  const targetGeneration = (pageRenderGenerations.get(pageContainer) || 0) + 1;
+  pageRenderGenerations.set(pageContainer, targetGeneration);
   pageContainer.dataset.renderStatus = "rendering";
 
   let page;
   try {
     page = await pdfDocument.getPage(pageNumber);
   } catch (pageLoadError) {
-    pageContainer.dataset.renderStatus = "idle";
+    if (pageRenderGenerations.get(pageContainer) === targetGeneration) {
+      pageContainer.dataset.renderStatus = "idle";
+    }
     console.error(`Failed loading page ${pageNumber}:`, pageLoadError);
+    return;
+  }
+
+  if (
+    pageRenderGenerations.get(pageContainer) !== targetGeneration ||
+    pageContainer.dataset.renderStatus !== "rendering"
+  ) {
+    return;
+  }
+
+  if (!forceWithinBuffer && !isContainerWithinRenderBuffer(pageContainer)) {
+    if (pageRenderGenerations.get(pageContainer) === targetGeneration) {
+      pageContainer.dataset.renderStatus = "idle";
+    }
     return;
   }
 
   const scaleFactor = parseFloat(
     pageContainer.dataset.scaleFactor ||
       pageContainer.style.getPropertyValue("--scale-factor") ||
-      "1"
+      "1",
   );
   const viewport = page.getViewport({ scale: scaleFactor });
   const outputScale = window.devicePixelRatio || 1;
 
   let canvas = pageContainer.querySelector("canvas");
-  if (!canvas) {
-    canvas = document.createElement("canvas");
-    pageContainer.appendChild(canvas);
+  if (canvas) {
+    canvas.remove();
   }
+  canvas = document.createElement("canvas");
+  pageContainer.appendChild(canvas);
 
   canvas.width = Math.floor(viewport.width * outputScale);
   canvas.height = Math.floor(viewport.height * outputScale);
@@ -363,7 +432,8 @@ export async function renderPageContainer(pageContainer, pdfDocument) {
   canvas.style.height = "100%";
 
   const canvasContext = canvas.getContext("2d");
-  const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+  const transform =
+    outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
 
   const renderContext = { canvasContext, transform, viewport };
   const renderTask = page.render(renderContext);
@@ -373,17 +443,24 @@ export async function renderPageContainer(pageContainer, pdfDocument) {
   try {
     await renderTask.promise;
   } catch (renderError) {
+    if (pageRenderGenerations.get(pageContainer) === targetGeneration) {
+      pageContainer.dataset.renderStatus = "idle";
+    }
     if (renderError && renderError.name === "RenderingCancelledException") {
       return;
     }
-    pageContainer.dataset.renderStatus = "idle";
     console.error(`Page ${pageNumber} canvas render error:`, renderError);
     return;
   } finally {
-    activeRenderTasks.delete(pageContainer);
+    if (activeRenderTasks.get(pageContainer) === renderTask) {
+      activeRenderTasks.delete(pageContainer);
+    }
   }
 
-  if (pageContainer.dataset.renderStatus !== "rendering") {
+  if (
+    pageRenderGenerations.get(pageContainer) !== targetGeneration ||
+    pageContainer.dataset.renderStatus !== "rendering"
+  ) {
     return;
   }
 
@@ -399,6 +476,13 @@ export async function renderPageContainer(pageContainer, pdfDocument) {
     }
 
     const textContent = await page.getTextContent();
+    if (
+      pageRenderGenerations.get(pageContainer) !== targetGeneration ||
+      pageContainer.dataset.renderStatus !== "rendering"
+    ) {
+      return;
+    }
+
     const textLayer = new pdfjsLib.TextLayer({
       textContentSource: textContent,
       container: textLayerDiv,
@@ -406,17 +490,34 @@ export async function renderPageContainer(pageContainer, pdfDocument) {
     });
     await textLayer.render();
 
+    if (
+      pageRenderGenerations.get(pageContainer) !== targetGeneration ||
+      pageContainer.dataset.renderStatus !== "rendering"
+    ) {
+      return;
+    }
+
     let annotationLayerDiv = pageContainer.querySelector(".annotationLayer");
     if (!annotationLayerDiv) {
       annotationLayerDiv = document.createElement("div");
       annotationLayerDiv.className = "annotationLayer";
-      annotationLayerDiv.style.setProperty("--scale-factor", String(viewport.scale));
+      annotationLayerDiv.style.setProperty(
+        "--scale-factor",
+        String(viewport.scale),
+      );
       pageContainer.appendChild(annotationLayerDiv);
     } else {
       annotationLayerDiv.innerHTML = "";
     }
 
     const annotations = await page.getAnnotations();
+    if (
+      pageRenderGenerations.get(pageContainer) !== targetGeneration ||
+      pageContainer.dataset.renderStatus !== "rendering"
+    ) {
+      return;
+    }
+
     const annotationLayer = new pdfjsLib.AnnotationLayer({
       div: annotationLayerDiv,
       accessibilityManager: null,
@@ -437,10 +538,19 @@ export async function renderPageContainer(pageContainer, pdfDocument) {
       renderForms: false,
     });
 
+    if (
+      pageRenderGenerations.get(pageContainer) !== targetGeneration ||
+      pageContainer.dataset.renderStatus !== "rendering"
+    ) {
+      return;
+    }
+
     attachAnnotationClickHandler(annotationLayerDiv, pdfDocument);
     pageContainer.dataset.renderStatus = "rendered";
   } catch (layerError) {
-    pageContainer.dataset.renderStatus = "idle";
+    if (pageRenderGenerations.get(pageContainer) === targetGeneration) {
+      pageContainer.dataset.renderStatus = "idle";
+    }
     console.error(`Page ${pageNumber} layer render error:`, layerError);
   }
 }
@@ -451,6 +561,9 @@ export async function renderPageContainer(pageContainer, pdfDocument) {
  * @returns {void}
  */
 export function unrenderPageContainer(pageContainer) {
+  const currentGeneration = (pageRenderGenerations.get(pageContainer) || 0) + 1;
+  pageRenderGenerations.set(pageContainer, currentGeneration);
+
   const currentTask = activeRenderTasks.get(pageContainer);
   if (currentTask) {
     try {
@@ -487,10 +600,11 @@ export function cancelAllRenderTasks(layerElement) {
 export async function renderVisiblePages(
   layerElement,
   pdfDocument,
-  bufferPixels = 800
+  bufferPixels = 800,
 ) {
   const visibleTop = layerElement.scrollTop - bufferPixels;
-  const visibleBottom = layerElement.scrollTop + layerElement.clientHeight + bufferPixels;
+  const visibleBottom =
+    layerElement.scrollTop + layerElement.clientHeight + bufferPixels;
 
   const containers = layerElement.querySelectorAll(".page-container");
   const renderPromises = [];
@@ -500,7 +614,7 @@ export async function renderVisiblePages(
     const containerBottom = containerTop + container.offsetHeight;
 
     if (containerBottom >= visibleTop && containerTop <= visibleBottom) {
-      renderPromises.push(renderPageContainer(container, pdfDocument));
+      renderPromises.push(renderPageContainer(container, pdfDocument, true));
     }
   });
 
@@ -517,7 +631,7 @@ export async function renderVisiblePages(
 export async function renderDocumentToLayer(
   pdfDocument,
   targetLayer,
-  pageToAnchor = null
+  pageToAnchor = null,
 ) {
   cancelAllRenderTasks(targetLayer);
   targetLayer.innerHTML = "";
@@ -527,7 +641,7 @@ export async function renderDocumentToLayer(
 
   const pagePromises = Array.from(
     { length: pdfDocument.numPages },
-    (_, index) => pdfDocument.getPage(index + 1)
+    (_, index) => pdfDocument.getPage(index + 1),
   );
   const pages = await Promise.all(pagePromises);
 
@@ -542,7 +656,7 @@ export async function renderDocumentToLayer(
       unscaledViewport,
       targetWidth,
       targetLayer.clientHeight,
-      state.currentZoomMode
+      state.currentZoomMode,
     );
 
     const viewport = page.getViewport({ scale: finalScale });
@@ -575,7 +689,7 @@ export async function renderDocumentToLayer(
 export async function renderAllPagesForPrint(layerElement, pdfDocument) {
   const containers = layerElement.querySelectorAll(".page-container");
   const renderPromises = Array.from(containers).map((container) =>
-    renderPageContainer(container, pdfDocument)
+    renderPageContainer(container, pdfDocument, true),
   );
   await Promise.all(renderPromises);
 }
