@@ -3,7 +3,7 @@
  * Orchestrator for SmoothPDF crossfade transitions, zoom, and printing in Atarashii.
  */
 
-import { state, updateState } from "./state.js";
+import { state, updateState, destroyPdfDocument } from "./state.js";
 import {
   getUIElements,
   showMessage,
@@ -22,19 +22,21 @@ import {
 } from "./pdf.js";
 
 /**
- * Executes queued crossfade render options when active rendering completes.
- * @returns {Promise<void>}
+ * Processes queued crossfade render options or resets active rendering state.
+ * @returns {void}
  */
-async function checkPending() {
+function handlePendingOrUnlock() {
   if (state.pendingRenderOptions) {
-    const options = state.pendingRenderOptions;
-    await updateState({ pendingRenderOptions: null });
-    await performCrossfadeUpdate(
-      state.currentPdfPath,
-      options.anchorPage,
-      options.isInstant,
-      options.forceReload
+    const pendingOptions = state.pendingRenderOptions;
+    state.pendingRenderOptions = null;
+    performCrossfadeUpdate(
+      pendingOptions.filePath || state.currentPdfPath,
+      pendingOptions.anchorPage,
+      pendingOptions.isInstant,
+      pendingOptions.forceReload
     );
+  } else {
+    state.isRendering = false;
   }
 }
 
@@ -52,55 +54,98 @@ async function performCrossfadeUpdate(
   isInstant = false,
   forceReload = false
 ) {
-  await updateState({ isRendering: true });
+  state.isRendering = true;
+  const currentRenderPass = ++state.renderPassIdentifier;
   try {
-    const resolvedPath = filePath || state.currentPdfPath;
-    let pdfDocument;
-    if (
-      !forceReload &&
-      resolvedPath === state.currentPdfPath &&
-      state.currentPdfDocument
-    ) {
-      pdfDocument = state.currentPdfDocument;
-    } else {
-      pdfDocument = await loadPdfDocument(resolvedPath);
-    }
-
-    await updateState({
-      currentPdfPath: resolvedPath,
-      currentPdfDocument: pdfDocument,
-      totalPages: pdfDocument.numPages,
-    });
-    updateControlsUI();
-
-    const currentScrollPosition = state.currentFront.scrollTop;
+    const supersededDocument = state.currentPdfDocument;
+    const activePageNumber = state.currentPageNumber || 1;
+    const currentScrollPosition = state.currentFront ? state.currentFront.scrollTop : 0;
+    const targetAnchorPage = anchorPage !== null ? anchorPage : activePageNumber;
 
     let relativeOffset = 0;
-    if (anchorPage) {
+    if (targetAnchorPage && state.currentFront) {
       const oldAnchorCanvas = state.currentFront.querySelector(
-        `.page-container[data-page-number="${anchorPage}"]`
+        `.page-container[data-page-number="${targetAnchorPage}"]`
       );
-      if (oldAnchorCanvas) {
+      if (oldAnchorCanvas && oldAnchorCanvas.offsetHeight > 0) {
         const distanceIntoPage = currentScrollPosition + 16 - oldAnchorCanvas.offsetTop;
         relativeOffset = distanceIntoPage / oldAnchorCanvas.offsetHeight;
       }
     }
 
-    const anchorCanvas = await renderDocumentToLayer(
-      pdfDocument,
-      state.currentBack,
-      anchorPage
-    );
-
-    if (anchorCanvas) {
-      const targetScrollTop =
-        anchorCanvas.offsetTop - 16 + relativeOffset * anchorCanvas.offsetHeight;
-      state.currentBack.scrollTop = Math.max(0, targetScrollTop);
+    const resolvedPath = filePath || state.currentPdfPath;
+    let newDocument;
+    if (
+      !forceReload &&
+      resolvedPath === state.currentPdfPath &&
+      state.currentPdfDocument &&
+      !state.currentPdfDocument.destroyed
+    ) {
+      newDocument = state.currentPdfDocument;
     } else {
-      state.currentBack.scrollTop = currentScrollPosition;
+      newDocument = await loadPdfDocument(resolvedPath);
     }
 
-    await renderVisiblePages(state.currentBack, pdfDocument);
+    if (state.renderPassIdentifier !== currentRenderPass) {
+      if (newDocument && newDocument !== supersededDocument) {
+        await destroyPdfDocument(newDocument);
+      }
+      return;
+    }
+
+    const targetPage = Math.max(1, Math.min(targetAnchorPage, newDocument.numPages));
+    if (!state.pendingRenderOptions) {
+      state.currentPdfPath = resolvedPath;
+    }
+    state.totalPages = newDocument.numPages;
+    state.currentPageNumber = targetPage;
+    updateControlsUI();
+
+    const anchorCanvas = await renderDocumentToLayer(
+      newDocument,
+      state.currentBack,
+      targetPage
+    );
+
+    if (state.renderPassIdentifier !== currentRenderPass) {
+      if (newDocument && newDocument !== supersededDocument) {
+        await destroyPdfDocument(newDocument);
+      }
+      return;
+    }
+
+    let calculatedScrollTop = currentScrollPosition;
+    if (anchorCanvas) {
+      calculatedScrollTop =
+        anchorCanvas.offsetTop - 16 + relativeOffset * anchorCanvas.offsetHeight;
+    }
+    if (state.currentBack.clientHeight > 0) {
+      const maximumBackScroll = Math.max(
+        0,
+        state.currentBack.scrollHeight - state.currentBack.clientHeight
+      );
+      calculatedScrollTop = Math.min(calculatedScrollTop, maximumBackScroll);
+    }
+    state.currentBack.scrollTop = Math.max(0, calculatedScrollTop);
+
+    await renderVisiblePages(state.currentBack, newDocument);
+
+    if (state.renderPassIdentifier !== currentRenderPass) {
+      if (newDocument && newDocument !== supersededDocument) {
+        await destroyPdfDocument(newDocument);
+      }
+      return;
+    }
+
+    if (state.pageObserver) {
+      state.pageObserver.disconnect();
+      state.pageObserver = null;
+    }
+    if (state.visibilityObserver) {
+      state.visibilityObserver.disconnect();
+      state.visibilityObserver = null;
+    }
+    cancelAllRenderTasks(state.currentFront);
 
     state.currentBack.style.transition = "none";
     state.currentBack.classList.remove("hidden");
@@ -115,11 +160,14 @@ async function performCrossfadeUpdate(
     state.currentFront.classList.add("hidden");
 
     if (!isInstant) {
-      await new Promise((resolve) => {
-        state.currentFront.addEventListener("transitionend", resolve, {
-          once: true,
-        });
-      });
+      await Promise.race([
+        new Promise((resolve) => {
+          state.currentFront.addEventListener("transitionend", resolve, {
+            once: true,
+          });
+        }),
+        new Promise((resolve) => setTimeout(resolve, 600)),
+      ]);
     }
 
     state.currentBack.classList.add("is-front");
@@ -127,11 +175,8 @@ async function performCrossfadeUpdate(
     state.currentFront.classList.add("is-back");
     state.currentFront.classList.remove("is-front");
 
-    cancelAllRenderTasks(state.currentFront);
     state.currentFront.innerHTML = "";
-
-    setupPageObserver(state.currentBack);
-    setupVisibilityObserver(state.currentBack, pdfDocument);
+    state.currentFront.scrollTop = 0;
 
     if (isInstant) {
       void state.currentFront.offsetWidth;
@@ -140,14 +185,23 @@ async function performCrossfadeUpdate(
       state.currentBack.style.transition = "";
     }
 
-    const previousFront = state.currentFront;
-    await updateState({ currentFront: state.currentBack, currentBack: previousFront });
+    const previousFrontLayer = state.currentFront;
+    state.currentFront = state.currentBack;
+    state.currentBack = previousFrontLayer;
+    state.currentPdfDocument = newDocument;
+
+    if (supersededDocument && supersededDocument !== newDocument) {
+      await destroyPdfDocument(supersededDocument);
+    }
+
+    setupPageObserver(state.currentFront);
+    setupVisibilityObserver(state.currentFront, newDocument);
+    updateControlsUI();
     hideMessage();
   } catch (crossfadeError) {
     console.error("Crossfade update error:", crossfadeError);
   } finally {
-    await updateState({ isRendering: false });
-    checkPending();
+    handlePendingOrUnlock();
   }
 }
 
@@ -157,19 +211,28 @@ async function performCrossfadeUpdate(
  * @returns {Promise<void>}
  */
 async function loadAndRenderPdf(filePath) {
-  await updateState({ isRendering: true });
+  state.isRendering = true;
+  const currentRenderPass = ++state.renderPassIdentifier;
   try {
     const pdfDocument = await loadPdfDocument(filePath);
-    await updateState({
-      currentPdfPath: filePath,
-      currentPdfDocument: pdfDocument,
-      totalPages: pdfDocument.numPages,
-    });
+    if (state.renderPassIdentifier !== currentRenderPass) {
+      await destroyPdfDocument(pdfDocument);
+      return;
+    }
+    const supersededDocument = state.currentPdfDocument;
+    state.currentPdfPath = filePath;
+    state.currentPdfDocument = pdfDocument;
+    state.totalPages = pdfDocument.numPages;
+    state.currentPageNumber = 1;
 
     updateControlsUI();
 
     await renderDocumentToLayer(pdfDocument, state.currentFront);
     await renderVisiblePages(state.currentFront, pdfDocument);
+
+    if (supersededDocument && supersededDocument !== pdfDocument) {
+      await destroyPdfDocument(supersededDocument);
+    }
 
     setupPageObserver(state.currentFront);
     setupVisibilityObserver(state.currentFront, pdfDocument);
@@ -178,8 +241,7 @@ async function loadAndRenderPdf(filePath) {
     console.error("Initial PDF load error:", initialLoadError);
     showMessage("Waiting for document.pdf generation...");
   } finally {
-    await updateState({ isRendering: false });
-    checkPending();
+    handlePendingOrUnlock();
   }
 }
 
@@ -215,18 +277,20 @@ export function createPdfViewer() {
         clearTimeout(resizeDebounceTimer);
         resizeDebounceTimer = setTimeout(async () => {
           if (!state.isRendering) {
+            state.isRendering = true;
             await performCrossfadeUpdate(
               state.currentPdfPath,
               state.currentPageNumber,
-              true
+              true,
+              false
             );
           } else {
-            await updateState({
-              pendingRenderOptions: {
-                anchorPage: state.currentPageNumber,
-                isInstant: true,
-              },
-            });
+            state.pendingRenderOptions = {
+              filePath: state.currentPdfPath,
+              anchorPage: state.currentPageNumber,
+              isInstant: true,
+              forceReload: false,
+            };
           }
         }, 150);
       });
@@ -239,20 +303,22 @@ export function createPdfViewer() {
         if (!targetPdfPath && !state.currentPdfDocument) {
           return;
         }
-        await updateState({ currentZoomMode: changeEvent.target.value });
+        state.currentZoomMode = changeEvent.target.value;
         updateControlsUI();
         if (state.isRendering) {
-          await updateState({
-            pendingRenderOptions: {
-              anchorPage: state.currentPageNumber,
-              isInstant: true,
-            },
-          });
+          state.pendingRenderOptions = {
+            filePath: targetPdfPath,
+            anchorPage: state.currentPageNumber,
+            isInstant: true,
+            forceReload: false,
+          };
         } else {
-          performCrossfadeUpdate(
+          state.isRendering = true;
+          await performCrossfadeUpdate(
             targetPdfPath,
             state.currentPageNumber,
-            true
+            true,
+            false
           );
         }
       });
@@ -295,21 +361,23 @@ export function createPdfViewer() {
         }
 
         if (nextZoomMode !== state.currentZoomMode) {
-          await updateState({ currentZoomMode: nextZoomMode });
+          state.currentZoomMode = nextZoomMode;
           updateControlsUI();
 
           if (state.isRendering) {
-            await updateState({
-              pendingRenderOptions: {
-                anchorPage: state.currentPageNumber,
-                isInstant: true,
-              },
-            });
+            state.pendingRenderOptions = {
+              filePath: state.currentPdfPath,
+              anchorPage: state.currentPageNumber,
+              isInstant: true,
+              forceReload: false,
+            };
           } else {
-            performCrossfadeUpdate(
+            state.isRendering = true;
+            await performCrossfadeUpdate(
               state.currentPdfPath,
               state.currentPageNumber,
-              true
+              true,
+              false
             );
           }
         }
@@ -359,36 +427,39 @@ export function createPdfViewer() {
     },
 
     async setPdfPath(filePath) {
-      await updateState({ currentPdfPath: filePath });
+      state.currentPdfPath = filePath;
     },
 
     async load(filePath) {
-      await updateState({ currentPdfPath: filePath });
+      state.currentPdfPath = filePath;
       showMessage("Loading document.pdf...");
       await loadAndRenderPdf(filePath);
     },
 
     async reload(filePath) {
-      await updateState({ currentPdfPath: filePath });
       if (state.isRendering) {
-        await updateState({
-          pendingRenderOptions: {
-            anchorPage: null,
-            isInstant: false,
-            forceReload: true,
-          },
-        });
-      } else {
-        await performCrossfadeUpdate(filePath, null, false, true);
+        state.pendingRenderOptions = {
+          filePath,
+          anchorPage: null,
+          isInstant: false,
+          forceReload: true,
+        };
+        state.currentPdfPath = filePath;
+        return;
       }
+      state.currentPdfPath = filePath;
+      state.isRendering = true;
+      await performCrossfadeUpdate(filePath, null, false, true);
     },
 
     async reset() {
       if (state.pageObserver) {
         state.pageObserver.disconnect();
+        state.pageObserver = null;
       }
       if (state.visibilityObserver) {
         state.visibilityObserver.disconnect();
+        state.visibilityObserver = null;
       }
       if (state.currentFront) {
         cancelAllRenderTasks(state.currentFront);
@@ -398,12 +469,16 @@ export function createPdfViewer() {
         cancelAllRenderTasks(state.currentBack);
         state.currentBack.innerHTML = "";
       }
-      await updateState({
-        currentPdfPath: null,
-        currentPdfDocument: null,
-        totalPages: 0,
-        currentPageNumber: 1,
-      });
+      const supersededDocument = state.currentPdfDocument;
+      state.currentPdfPath = null;
+      state.currentPdfDocument = null;
+      state.totalPages = 0;
+      state.currentPageNumber = 1;
+      state.pendingRenderOptions = null;
+      state.isRendering = false;
+      if (supersededDocument) {
+        await destroyPdfDocument(supersededDocument);
+      }
       showMessage("Generating document.pdf...");
     },
   };

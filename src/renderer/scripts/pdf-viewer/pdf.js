@@ -22,8 +22,9 @@ let activeNavigationIdentifier = 0;
  * @returns {Promise<import("pdfjs-dist").PDFDocumentProxy>} PDF document proxy.
  */
 export async function loadPdfDocument(filePath) {
+  const cacheBustingTimestamp = Date.now();
   const loadingTask = pdfjsLib.getDocument(
-    `safe-file://${encodeURIComponent(filePath)}`,
+    `safe-file://${encodeURIComponent(filePath)}?t=${cacheBustingTimestamp}`,
   );
   return await loadingTask.promise;
 }
@@ -224,7 +225,8 @@ export function jumpToPage(inputPage, destinationArray = null) {
     return;
   }
 
-  targetPageNumber = Math.max(1, Math.min(targetPageNumber, state.totalPages));
+  const validTotalPages = Math.max(1, state.totalPages);
+  targetPageNumber = Math.max(1, Math.min(targetPageNumber, validTotalPages));
   state.currentPageNumber = targetPageNumber;
   if (elements.pageInput) {
     elements.pageInput.value = targetPageNumber;
@@ -297,10 +299,17 @@ export function jumpToPage(inputPage, destinationArray = null) {
     targetScrollTop = 0;
   }
 
+  if (state.currentFront.clientHeight > 0) {
+    const maximumScrollBoundary = Math.max(
+      0,
+      state.currentFront.scrollHeight - state.currentFront.clientHeight,
+    );
+    targetScrollTop = Math.min(targetScrollTop, maximumScrollBoundary);
+  }
   targetScrollTop = Math.max(0, targetScrollTop);
 
   if (Math.abs(state.currentFront.scrollTop - targetScrollTop) < 2) {
-    if (state.currentPdfDocument) {
+    if (state.currentPdfDocument && !state.currentPdfDocument.destroyed) {
       renderVisiblePages(state.currentFront, state.currentPdfDocument);
     }
     return;
@@ -322,7 +331,7 @@ export function jumpToPage(inputPage, destinationArray = null) {
     isSettled = true;
     state.isScrollNavigating = false;
     state.ignoreScrollEvents = false;
-    if (state.currentPdfDocument) {
+    if (state.currentPdfDocument && !state.currentPdfDocument.destroyed) {
       renderVisiblePages(state.currentFront, state.currentPdfDocument);
     }
     syncCurrentPageFromScroll(state.currentFront);
@@ -369,6 +378,10 @@ export async function renderPageContainer(
   pdfDocument,
   forceWithinBuffer = false,
 ) {
+  if (!pdfDocument || pdfDocument.destroyed) {
+    return;
+  }
+
   const existingCanvas = pageContainer.querySelector("canvas");
   if (
     (pageContainer.dataset.renderStatus === "rendered" && existingCanvas) ||
@@ -393,11 +406,22 @@ export async function renderPageContainer(
     if (pageRenderGenerations.get(pageContainer) === targetGeneration) {
       pageContainer.dataset.renderStatus = "idle";
     }
+    const isDestroyedError =
+      !pdfDocument ||
+      pdfDocument.destroyed ||
+      (pageLoadError &&
+        (pageLoadError.name === "RenderingCancelledException" ||
+          (typeof pageLoadError.message === "string" &&
+            pageLoadError.message.includes("sendWithPromise"))));
+    if (isDestroyedError) {
+      return;
+    }
     console.error(`Failed loading page ${pageNumber}:`, pageLoadError);
     return;
   }
 
   if (
+    pdfDocument.destroyed ||
     pageRenderGenerations.get(pageContainer) !== targetGeneration ||
     pageContainer.dataset.renderStatus !== "rendering"
   ) {
@@ -446,7 +470,14 @@ export async function renderPageContainer(
     if (pageRenderGenerations.get(pageContainer) === targetGeneration) {
       pageContainer.dataset.renderStatus = "idle";
     }
-    if (renderError && renderError.name === "RenderingCancelledException") {
+    const isDestroyedError =
+      !pdfDocument ||
+      pdfDocument.destroyed ||
+      (renderError &&
+        (renderError.name === "RenderingCancelledException" ||
+          (typeof renderError.message === "string" &&
+            renderError.message.includes("sendWithPromise"))));
+    if (isDestroyedError) {
       return;
     }
     console.error(`Page ${pageNumber} canvas render error:`, renderError);
@@ -458,6 +489,7 @@ export async function renderPageContainer(
   }
 
   if (
+    pdfDocument.destroyed ||
     pageRenderGenerations.get(pageContainer) !== targetGeneration ||
     pageContainer.dataset.renderStatus !== "rendering"
   ) {
@@ -475,8 +507,16 @@ export async function renderPageContainer(
       textLayerDiv.innerHTML = "";
     }
 
+    if (
+      pdfDocument.destroyed ||
+      pageRenderGenerations.get(pageContainer) !== targetGeneration
+    ) {
+      return;
+    }
+
     const textContent = await page.getTextContent();
     if (
+      pdfDocument.destroyed ||
       pageRenderGenerations.get(pageContainer) !== targetGeneration ||
       pageContainer.dataset.renderStatus !== "rendering"
     ) {
@@ -491,6 +531,7 @@ export async function renderPageContainer(
     await textLayer.render();
 
     if (
+      pdfDocument.destroyed ||
       pageRenderGenerations.get(pageContainer) !== targetGeneration ||
       pageContainer.dataset.renderStatus !== "rendering"
     ) {
@@ -510,8 +551,16 @@ export async function renderPageContainer(
       annotationLayerDiv.innerHTML = "";
     }
 
+    if (
+      pdfDocument.destroyed ||
+      pageRenderGenerations.get(pageContainer) !== targetGeneration
+    ) {
+      return;
+    }
+
     const annotations = await page.getAnnotations();
     if (
+      pdfDocument.destroyed ||
       pageRenderGenerations.get(pageContainer) !== targetGeneration ||
       pageContainer.dataset.renderStatus !== "rendering"
     ) {
@@ -539,6 +588,7 @@ export async function renderPageContainer(
     });
 
     if (
+      pdfDocument.destroyed ||
       pageRenderGenerations.get(pageContainer) !== targetGeneration ||
       pageContainer.dataset.renderStatus !== "rendering"
     ) {
@@ -550,6 +600,16 @@ export async function renderPageContainer(
   } catch (layerError) {
     if (pageRenderGenerations.get(pageContainer) === targetGeneration) {
       pageContainer.dataset.renderStatus = "idle";
+    }
+    const isDestroyedError =
+      !pdfDocument ||
+      pdfDocument.destroyed ||
+      (layerError &&
+        (layerError.name === "RenderingCancelledException" ||
+          (typeof layerError.message === "string" &&
+            layerError.message.includes("sendWithPromise"))));
+    if (isDestroyedError) {
+      return;
     }
     console.error(`Page ${pageNumber} layer render error:`, layerError);
   }
@@ -636,6 +696,13 @@ export async function renderDocumentToLayer(
   cancelAllRenderTasks(targetLayer);
   targetLayer.innerHTML = "";
 
+  const clampedAnchorPage =
+    typeof pageToAnchor === "number" &&
+    !isNaN(pageToAnchor) &&
+    pdfDocument.numPages > 0
+      ? Math.max(1, Math.min(pageToAnchor, pdfDocument.numPages))
+      : null;
+
   const targetWidth = targetLayer.clientWidth * 0.9;
   let targetAnchorCanvas = null;
 
@@ -669,7 +736,7 @@ export async function renderDocumentToLayer(
     pageContainer.style.width = `${Math.floor(viewport.width)}px`;
     pageContainer.style.height = `${Math.floor(viewport.height)}px`;
 
-    if (pageNumber === pageToAnchor) {
+    if (pageNumber === clampedAnchorPage) {
       targetAnchorCanvas = pageContainer;
     }
 

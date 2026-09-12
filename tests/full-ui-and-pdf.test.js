@@ -38,7 +38,8 @@ describe("Full UI and PDF Rendering Integration", () => {
       app.whenReady().then(async () => {
         protocol.handle("safe-file", (request) => {
           try {
-            const rawPath = request.url.slice("safe-file://".length);
+            const urlWithoutQuery = request.url.split("?")[0];
+            const rawPath = urlWithoutQuery.slice("safe-file://".length);
             const decodedPath = decodeURIComponent(rawPath);
             const absoluteRequestedPath = path.resolve(decodedPath);
             if (!fs.existsSync(absoluteRequestedPath)) {
@@ -46,7 +47,12 @@ describe("Full UI and PDF Rendering Integration", () => {
             }
             const fileData = fs.readFileSync(absoluteRequestedPath);
             return new Response(fileData, {
-              headers: { "Content-Type": "application/pdf" },
+              headers: {
+                "Content-Type": "application/pdf",
+                "Content-Length": String(fileData.length),
+                "Cache-Control": "no-store, no-cache, must-revalidate",
+                "Pragma": "no-cache",
+              },
             });
           } catch (err) {
             return new Response("Error", { status: 500 });
@@ -78,6 +84,9 @@ describe("Full UI and PDF Rendering Integration", () => {
         const dummyConsent = { hasConsent: () => true, grantConsent() {}, clearConsent() {} };
         const dummyConverter = { startLiveConversion: async () => {}, stopLiveConversion: async () => {} };
         registerIpcHandlers(win, dummyLogger, dummyConsent, dummyConverter);
+        const { ipcMain } = require("electron");
+        ipcMain.removeHandler("system:check-update");
+        ipcMain.handle("system:check-update", async () => ({ status: "up-to-date" }));
 
         win.webContents.on("console-message", (event) => {
           console.log("[Renderer]", event.message);
@@ -93,7 +102,10 @@ describe("Full UI and PDF Rendering Integration", () => {
                 const { jumpToPage } = await import("./scripts/pdf-viewer/pdf.js");
                 const { state } = await import("./scripts/pdf-viewer/state.js");
 
-                await new Promise((resolve) => setTimeout(resolve, 600));
+                while (document.getElementById("screen-loading").classList.contains("active-screen")) {
+                  await new Promise((resolve) => setTimeout(resolve, 50));
+                }
+                await new Promise((resolve) => setTimeout(resolve, 100));
 
                 const { createScreenManager } = await import("./scripts/screen-manager.js");
                 const screenManagerInstance = createScreenManager();

@@ -85,6 +85,11 @@ export function syncCurrentPageFromScroll(layerElement) {
     return;
   }
 
+  const containers = layerElement.querySelectorAll(".page-container");
+  if (containers.length === 0) {
+    return;
+  }
+
   const scrollTop = layerElement.scrollTop;
   const clientHeight = layerElement.clientHeight;
   const scrollHeight = layerElement.scrollHeight;
@@ -96,7 +101,6 @@ export function syncCurrentPageFromScroll(layerElement) {
     targetPage = state.totalPages;
   } else {
     const targetCenter = scrollTop + clientHeight / 2;
-    const containers = layerElement.querySelectorAll(".page-container");
     let low = 0;
     let high = containers.length - 1;
 
@@ -141,11 +145,19 @@ export async function setupPageObserver(layerElement) {
   let scrollIdleDebounceTimer = null;
 
   const reconcilePages = () => {
-    if (state.isScrollNavigating || !state.currentPdfDocument) {
+    if (
+      state.isRendering ||
+      state.isScrollNavigating ||
+      !state.currentPdfDocument ||
+      state.currentPdfDocument.destroyed
+    ) {
       return;
     }
     renderVisiblePages(layerElement, state.currentPdfDocument).catch(
       (reconcileError) => {
+        if (!state.currentPdfDocument || state.currentPdfDocument.destroyed) {
+          return;
+        }
         console.error(
           "Error reconciling visible pages on scroll:",
           reconcileError,
@@ -155,6 +167,14 @@ export async function setupPageObserver(layerElement) {
   };
 
   const onScroll = () => {
+    if (
+      state.isRendering ||
+      state.ignoreScrollEvents ||
+      !state.currentPdfDocument ||
+      state.currentPdfDocument.destroyed
+    ) {
+      return;
+    }
     if (!isScrollScheduled) {
       isScrollScheduled = true;
       requestAnimationFrame(() => {
@@ -170,6 +190,14 @@ export async function setupPageObserver(layerElement) {
   };
 
   const onScrollEnd = () => {
+    if (
+      state.isRendering ||
+      state.ignoreScrollEvents ||
+      !state.currentPdfDocument ||
+      state.currentPdfDocument.destroyed
+    ) {
+      return;
+    }
     clearTimeout(scrollIdleDebounceTimer);
     syncCurrentPageFromScroll(layerElement);
     reconcilePages();
@@ -203,7 +231,12 @@ export async function setupVisibilityObserver(layerElement, pdfDocument) {
 
   const visibilityObserver = new IntersectionObserver(
     (entries) => {
-      if (state.isScrollNavigating) {
+      if (
+        !pdfDocument ||
+        pdfDocument.destroyed ||
+        state.isRendering ||
+        state.isScrollNavigating
+      ) {
         return;
       }
 
@@ -212,6 +245,9 @@ export async function setupVisibilityObserver(layerElement, pdfDocument) {
         if (entry.isIntersecting) {
           renderPageContainer(pageContainer, pdfDocument).catch(
             (renderError) => {
+              if (pdfDocument.destroyed) {
+                return;
+              }
               console.error(
                 "Error rendering visible page container:",
                 renderError,
