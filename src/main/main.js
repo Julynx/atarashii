@@ -99,7 +99,8 @@ app.whenReady().then(async () => {
 
   protocol.handle("safe-file", (request) => {
     try {
-      const rawPath = request.url.slice("safe-file://".length);
+      const urlWithoutQuery = request.url.split("?")[0];
+      const rawPath = urlWithoutQuery.slice("safe-file://".length);
       const decodedPath = decodeURIComponent(rawPath);
       const absoluteRequestedPath = path.resolve(decodedPath);
       if (!fs.existsSync(absoluteRequestedPath)) {
@@ -110,6 +111,8 @@ app.whenReady().then(async () => {
         headers: {
           "Content-Type": "application/pdf",
           "Content-Length": String(fileData.length),
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          "Pragma": "no-cache",
         },
       });
     } catch (handlerError) {
