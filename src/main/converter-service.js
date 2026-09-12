@@ -20,7 +20,11 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
   let activeWatcher = null;
   let activeProjectPath = null;
   let activeMarkdownFileName = null;
+  let activeCssFileName = null;
+  let activePdfFileName = null;
   let logFileDescriptor = null;
+  let isIntentionallyStopped = true;
+  let restartTimeoutIdentifier = null;
 
   /**
    * Forcibly terminates a process and its child processes on Windows.
@@ -65,10 +69,99 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
   }
 
   /**
+   * Spawns the markdown-convert CLI child process in live mode.
+   * @returns {void}
+   */
+  function spawnConversionProcess() {
+    if (isIntentionallyStopped || !activeProjectPath || !activeMarkdownFileName) {
+      return;
+    }
+
+    const commandArguments = [
+      activeMarkdownFileName,
+      `--css=${activeCssFileName}`,
+      "--mode=live",
+      `--out=${activePdfFileName}`,
+    ];
+
+    logger.info(`Launching: markdown-convert ${commandArguments.join(" ")} in ${activeProjectPath}`);
+
+    const commandNotification = `[Atarashii] Starting: markdown-convert ${commandArguments.join(" ")}\n`;
+    if (logFileDescriptor) {
+      fs.writeSync(logFileDescriptor, commandNotification);
+    }
+    broadcastLogEvent(commandNotification);
+
+    activeProcess = spawn("markdown-convert", commandArguments, {
+      cwd: activeProjectPath,
+      windowsHide: true,
+      shell: false,
+      detached: process.platform !== "win32",
+    });
+
+    activeProcess.stdout.on("data", (chunk) => {
+      const text = chunk.toString("utf8");
+      if (logFileDescriptor) {
+        fs.writeSync(logFileDescriptor, text);
+      }
+      broadcastLogEvent(text);
+    });
+
+    activeProcess.stderr.on("data", (chunk) => {
+      const text = chunk.toString("utf8");
+      if (logFileDescriptor) {
+        fs.writeSync(logFileDescriptor, text);
+      }
+      broadcastLogEvent(text);
+    });
+
+    activeProcess.on("error", (processError) => {
+      const errorText = `[Atarashii Error] Failed to launch conversion process: ${processError.message}\n`;
+      logger.error(errorText);
+      if (logFileDescriptor) {
+        fs.writeSync(logFileDescriptor, errorText);
+      }
+      broadcastLogEvent(errorText);
+    });
+
+    activeProcess.on("close", (exitCode) => {
+      const exitText = `\n[Atarashii] Conversion process exited with code ${exitCode}\n`;
+      logger.info(exitText.trim());
+      if (logFileDescriptor) {
+        fs.writeSync(logFileDescriptor, exitText);
+      }
+      broadcastLogEvent(exitText);
+
+      activeProcess = null;
+
+      if (!isIntentionallyStopped && activeProjectPath) {
+        const restartNotice = "[Atarashii] Live conversion process exited unexpectedly. Restarting in 1 second...\n";
+        logger.warn(restartNotice.trim());
+        if (logFileDescriptor) {
+          fs.writeSync(logFileDescriptor, restartNotice);
+        }
+        broadcastLogEvent(restartNotice);
+
+        restartTimeoutIdentifier = setTimeout(() => {
+          restartTimeoutIdentifier = null;
+          spawnConversionProcess();
+        }, 1000);
+      }
+    });
+  }
+
+  /**
    * Stops the currently running conversion process.
    * @returns {Promise<void>}
    */
   async function stopLiveConversion() {
+    isIntentionallyStopped = true;
+
+    if (restartTimeoutIdentifier) {
+      clearTimeout(restartTimeoutIdentifier);
+      restartTimeoutIdentifier = null;
+    }
+
     await closeActiveWatcher();
 
     if (logFileDescriptor) {
@@ -89,6 +182,8 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
 
     activeProjectPath = null;
     activeMarkdownFileName = null;
+    activeCssFileName = null;
+    activePdfFileName = null;
   }
 
   /**
@@ -132,8 +227,11 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
   async function startLiveConversion(projectPath, markdownFileName, cssFileName, pdfFileName) {
     await stopLiveConversion();
 
+    isIntentionallyStopped = false;
     activeProjectPath = projectPath;
     activeMarkdownFileName = markdownFileName;
+    activeCssFileName = cssFileName;
+    activePdfFileName = pdfFileName;
 
     const conversionLogFilePath = path.join(projectPath, "conversion.log");
     const outputPdfFilePath = path.join(projectPath, pdfFileName);
@@ -142,59 +240,7 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
 
     setupPdfWatcher(outputPdfFilePath);
 
-    const commandArguments = [
-      markdownFileName,
-      `--css=${cssFileName}`,
-      "--mode=live",
-      `--out=${pdfFileName}`,
-    ];
-
-    logger.info(`Launching: markdown-convert ${commandArguments.join(" ")} in ${projectPath}`);
-
-    const commandNotification = `[Atarashii] Starting: markdown-convert ${commandArguments.join(" ")}\n`;
-    fs.writeSync(logFileDescriptor, commandNotification);
-    broadcastLogEvent(commandNotification);
-
-    activeProcess = spawn("markdown-convert", commandArguments, {
-      cwd: projectPath,
-      windowsHide: true,
-      shell: false,
-      detached: process.platform !== "win32",
-    });
-
-    activeProcess.stdout.on("data", (chunk) => {
-      const text = chunk.toString("utf8");
-      if (logFileDescriptor) {
-        fs.writeSync(logFileDescriptor, text);
-      }
-      broadcastLogEvent(text);
-    });
-
-    activeProcess.stderr.on("data", (chunk) => {
-      const text = chunk.toString("utf8");
-      if (logFileDescriptor) {
-        fs.writeSync(logFileDescriptor, text);
-      }
-      broadcastLogEvent(text);
-    });
-
-    activeProcess.on("error", (processError) => {
-      const errorText = `[Atarashii Error] Failed to launch conversion process: ${processError.message}\n`;
-      logger.error(errorText);
-      if (logFileDescriptor) {
-        fs.writeSync(logFileDescriptor, errorText);
-      }
-      broadcastLogEvent(errorText);
-    });
-
-    activeProcess.on("close", (exitCode) => {
-      const exitText = `\n[Atarashii] Conversion process exited with code ${exitCode}\n`;
-      logger.info(exitText.trim());
-      if (logFileDescriptor) {
-        fs.writeSync(logFileDescriptor, exitText);
-      }
-      broadcastLogEvent(exitText);
-    });
+    spawnConversionProcess();
   }
 
   /**
