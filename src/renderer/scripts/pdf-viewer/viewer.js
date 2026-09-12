@@ -145,7 +145,6 @@ async function performCrossfadeUpdate(
       state.visibilityObserver.disconnect();
       state.visibilityObserver = null;
     }
-    cancelAllRenderTasks(state.currentFront);
 
     state.currentBack.style.transition = "none";
     state.currentBack.classList.remove("hidden");
@@ -162,9 +161,22 @@ async function performCrossfadeUpdate(
     if (!isInstant) {
       await Promise.race([
         new Promise((resolve) => {
-          state.currentFront.addEventListener("transitionend", resolve, {
-            once: true,
-          });
+          const onTransitionEnd = (transitionEvent) => {
+            if (
+              transitionEvent.target === state.currentFront &&
+              transitionEvent.propertyName === "opacity"
+            ) {
+              state.currentFront.removeEventListener(
+                "transitionend",
+                onTransitionEnd,
+              );
+              resolve();
+            }
+          };
+          state.currentFront.addEventListener(
+            "transitionend",
+            onTransitionEnd,
+          );
         }),
         new Promise((resolve) => setTimeout(resolve, 600)),
       ]);
@@ -175,6 +187,7 @@ async function performCrossfadeUpdate(
     state.currentFront.classList.add("is-back");
     state.currentFront.classList.remove("is-front");
 
+    cancelAllRenderTasks(state.currentFront);
     state.currentFront.innerHTML = "";
     state.currentFront.scrollTop = 0;
 
