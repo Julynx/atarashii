@@ -746,17 +746,3 @@ export async function renderDocumentToLayer(
   targetLayer.appendChild(fragment);
   return targetAnchorCanvas;
 }
-
-/**
- * Renders all pages across the document for printing.
- * @param {HTMLElement} layerElement - Container layer element.
- * @param {import("pdfjs-dist").PDFDocumentProxy} pdfDocument - PDF document instance.
- * @returns {Promise<void>}
- */
-export async function renderAllPagesForPrint(layerElement, pdfDocument) {
-  const containers = layerElement.querySelectorAll(".page-container");
-  const renderPromises = Array.from(containers).map((container) =>
-    renderPageContainer(container, pdfDocument, true),
-  );
-  await Promise.all(renderPromises);
-}

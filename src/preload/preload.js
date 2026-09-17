@@ -74,6 +74,9 @@ contextBridge.exposeInMainWorld("atarashiiApi", {
   stopConverter() {
     return ipcRenderer.invoke("converter:stop");
   },
+  printPdf(pdfPath) {
+    return ipcRenderer.invoke("pdf:print", pdfPath);
+  },
   showContextMenu(menuType = "viewer") {
     ipcRenderer.send("show-context-menu", menuType);
   },

@@ -11,10 +11,19 @@ const { createLogger } = require("./logger");
 const { refreshEnvironmentPath } = require("./environment");
 const { createInstallConsentStore } = require("./install-consent");
 const { createConverterService } = require("./converter-service");
+const { createPrintService } = require("./print-service");
 const { registerIpcHandlers } = require("./ipc-handlers");
 
-const configurationFilePath = path.join(__dirname, "..", "..", "config", "app-config.json");
-const appConfiguration = JSON.parse(fs.readFileSync(configurationFilePath, "utf8"));
+const configurationFilePath = path.join(
+  __dirname,
+  "..",
+  "..",
+  "config",
+  "app-config.json",
+);
+const appConfiguration = JSON.parse(
+  fs.readFileSync(configurationFilePath, "utf8"),
+);
 
 let primaryWindow = null;
 let converterServiceInstance = null;
@@ -30,7 +39,7 @@ function createPrimaryWindow() {
     "..",
     "assets",
     "icons",
-    "app-icon.png"
+    "app-icon.png",
   );
 
   const windowInstance = new BrowserWindow({
@@ -93,7 +102,11 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async () => {
-  const applicationLogFilePath = path.join(app.getPath("userData"), "logs", "app.log");
+  const applicationLogFilePath = path.join(
+    app.getPath("userData"),
+    "logs",
+    "app.log",
+  );
   const applicationLogger = createLogger(applicationLogFilePath);
   applicationLogger.info(`${appConfiguration.appName} starting.`);
 
@@ -112,11 +125,13 @@ app.whenReady().then(async () => {
           "Content-Type": "application/pdf",
           "Content-Length": String(fileData.length),
           "Cache-Control": "no-store, no-cache, must-revalidate",
-          "Pragma": "no-cache",
+          Pragma: "no-cache",
         },
       });
     } catch (handlerError) {
-      applicationLogger.error(`Error serving safe-file: ${handlerError.message}`);
+      applicationLogger.error(
+        `Error serving safe-file: ${handlerError.message}`,
+      );
       return new Response("Error reading file", { status: 500 });
     }
   });
@@ -125,7 +140,7 @@ app.whenReady().then(async () => {
 
   const consentStore = createInstallConsentStore(
     path.join(app.getPath("userData"), "install-consent.json"),
-    applicationLogger
+    applicationLogger,
   );
 
   converterServiceInstance = createConverterService(
@@ -139,31 +154,42 @@ app.whenReady().then(async () => {
       if (primaryWindow && !primaryWindow.isDestroyed()) {
         primaryWindow.webContents.send("pdf:updated", pdfPath);
       }
-    }
+    },
   );
 
   primaryWindow = createPrimaryWindow();
-  registerIpcHandlers(primaryWindow, applicationLogger, consentStore, converterServiceInstance);
+  const printServiceInstance = createPrintService(applicationLogger);
+  printServiceInstance.ensurePrintWindow();
+  registerIpcHandlers(
+    primaryWindow,
+    applicationLogger,
+    consentStore,
+    converterServiceInstance,
+    printServiceInstance,
+  );
 
   primaryWindow.webContents.on("console-message", (event) => {
     applicationLogger.info(
-      `[Renderer] (${event.level}) ${event.message} [${event.sourceId}:${event.lineNumber}]`
+      `[Renderer] (${event.level}) ${event.message} [${event.sourceId}:${event.lineNumber}]`,
     );
   });
 
-  primaryWindow.webContents.on("before-input-event", (inputEvent, inputData) => {
-    if (inputData.type === "keyDown") {
-      const isF12 = inputData.key === "F12";
-      const isDevToolsCombo =
-        (inputData.control || inputData.meta) &&
-        inputData.shift &&
-        inputData.key.toLowerCase() === "i";
-      if (isF12 || isDevToolsCombo) {
-        primaryWindow.webContents.toggleDevTools();
-        inputEvent.preventDefault();
+  primaryWindow.webContents.on(
+    "before-input-event",
+    (inputEvent, inputData) => {
+      if (inputData.type === "keyDown") {
+        const isF12 = inputData.key === "F12";
+        const isDevToolsCombo =
+          (inputData.control || inputData.meta) &&
+          inputData.shift &&
+          inputData.key.toLowerCase() === "i";
+        if (isF12 || isDevToolsCombo) {
+          primaryWindow.webContents.toggleDevTools();
+          inputEvent.preventDefault();
+        }
       }
-    }
-  });
+    },
+  );
 
   if (process.argv.includes("--devtools") || process.argv.includes("--dev")) {
     primaryWindow.webContents.openDevTools();
@@ -181,7 +207,8 @@ app.whenReady().then(async () => {
     primaryWindow.webContents.on("did-finish-load", () => {
       setTimeout(async () => {
         try {
-          const testNavigationSequence = await primaryWindow.webContents.executeJavaScript(`
+          const testNavigationSequence = await primaryWindow.webContents
+            .executeJavaScript(`
             (async () => {
               const screens = [
                 "screen-loading",
@@ -221,11 +248,15 @@ app.whenReady().then(async () => {
             })()
           `);
 
-          applicationLogger.info(`[NavigationTestResult] ${JSON.stringify(testNavigationSequence)}`);
+          applicationLogger.info(
+            `[NavigationTestResult] ${JSON.stringify(testNavigationSequence)}`,
+          );
           if (testNavigationSequence.ok) {
             app.exit(0);
           } else {
-            applicationLogger.error(`Navigation visibility failed: ${JSON.stringify(testNavigationSequence)}`);
+            applicationLogger.error(
+              `Navigation visibility failed: ${JSON.stringify(testNavigationSequence)}`,
+            );
             app.exit(1);
           }
         } catch (navigationError) {
