@@ -48,6 +48,7 @@ function serializeError(error) {
  * @param {{info: Function, warn: Function, error: Function}} logger - Logging service.
  * @param {{hasConsent: Function, grantConsent: Function, clearConsent: Function}} consentStore - Consent storage.
  * @param {ReturnType<typeof import("./converter-service").createConverterService>} converterService - Conversion service.
+ * @param {ReturnType<typeof import("./print-service").createPrintService>} printService - PDF printing service.
  * @returns {void}
  */
 function registerIpcHandlers(
@@ -55,6 +56,7 @@ function registerIpcHandlers(
   logger,
   consentStore,
   converterService,
+  printService,
 ) {
   ipcMain.handle("window:minimize", () => {
     mainWindow.minimize();
@@ -276,6 +278,15 @@ function registerIpcHandlers(
   ipcMain.handle("converter:stop", async () => {
     await converterService.stopLiveConversion();
     return { ok: true };
+  });
+
+  ipcMain.handle("pdf:print", async (_event, pdfPath) => {
+    try {
+      return await printService.printPdf(pdfPath);
+    } catch (printError) {
+      logger.error(`PDF print failure: ${printError.message}`);
+      return { ok: false, error: serializeError(printError) };
+    }
   });
 
   ipcMain.on("show-context-menu", (event, menuType = "viewer") => {

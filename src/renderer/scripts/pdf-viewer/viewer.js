@@ -17,7 +17,6 @@ import {
   jumpToPage,
   renderDocumentToLayer,
   renderVisiblePages,
-  renderAllPagesForPrint,
   cancelAllRenderTasks,
 } from "./pdf.js";
 
@@ -33,7 +32,7 @@ function handlePendingOrUnlock() {
       pendingOptions.filePath || state.currentPdfPath,
       pendingOptions.anchorPage,
       pendingOptions.isInstant,
-      pendingOptions.forceReload
+      pendingOptions.forceReload,
     );
   } else {
     state.isRendering = false;
@@ -52,23 +51,27 @@ async function performCrossfadeUpdate(
   filePath,
   anchorPage = null,
   isInstant = false,
-  forceReload = false
+  forceReload = false,
 ) {
   state.isRendering = true;
   const currentRenderPass = ++state.renderPassIdentifier;
   try {
     const supersededDocument = state.currentPdfDocument;
     const activePageNumber = state.currentPageNumber || 1;
-    const currentScrollPosition = state.currentFront ? state.currentFront.scrollTop : 0;
-    const targetAnchorPage = anchorPage !== null ? anchorPage : activePageNumber;
+    const currentScrollPosition = state.currentFront
+      ? state.currentFront.scrollTop
+      : 0;
+    const targetAnchorPage =
+      anchorPage !== null ? anchorPage : activePageNumber;
 
     let relativeOffset = 0;
     if (targetAnchorPage && state.currentFront) {
       const oldAnchorCanvas = state.currentFront.querySelector(
-        `.page-container[data-page-number="${targetAnchorPage}"]`
+        `.page-container[data-page-number="${targetAnchorPage}"]`,
       );
       if (oldAnchorCanvas && oldAnchorCanvas.offsetHeight > 0) {
-        const distanceIntoPage = currentScrollPosition + 16 - oldAnchorCanvas.offsetTop;
+        const distanceIntoPage =
+          currentScrollPosition + 16 - oldAnchorCanvas.offsetTop;
         relativeOffset = distanceIntoPage / oldAnchorCanvas.offsetHeight;
       }
     }
@@ -93,7 +96,10 @@ async function performCrossfadeUpdate(
       return;
     }
 
-    const targetPage = Math.max(1, Math.min(targetAnchorPage, newDocument.numPages));
+    const targetPage = Math.max(
+      1,
+      Math.min(targetAnchorPage, newDocument.numPages),
+    );
     if (!state.pendingRenderOptions) {
       state.currentPdfPath = resolvedPath;
     }
@@ -104,7 +110,7 @@ async function performCrossfadeUpdate(
     const anchorCanvas = await renderDocumentToLayer(
       newDocument,
       state.currentBack,
-      targetPage
+      targetPage,
     );
 
     if (state.renderPassIdentifier !== currentRenderPass) {
@@ -117,12 +123,14 @@ async function performCrossfadeUpdate(
     let calculatedScrollTop = currentScrollPosition;
     if (anchorCanvas) {
       calculatedScrollTop =
-        anchorCanvas.offsetTop - 16 + relativeOffset * anchorCanvas.offsetHeight;
+        anchorCanvas.offsetTop -
+        16 +
+        relativeOffset * anchorCanvas.offsetHeight;
     }
     if (state.currentBack.clientHeight > 0) {
       const maximumBackScroll = Math.max(
         0,
-        state.currentBack.scrollHeight - state.currentBack.clientHeight
+        state.currentBack.scrollHeight - state.currentBack.clientHeight,
       );
       calculatedScrollTop = Math.min(calculatedScrollTop, maximumBackScroll);
     }
@@ -173,10 +181,7 @@ async function performCrossfadeUpdate(
               resolve();
             }
           };
-          state.currentFront.addEventListener(
-            "transitionend",
-            onTransitionEnd,
-          );
+          state.currentFront.addEventListener("transitionend", onTransitionEnd);
         }),
         new Promise((resolve) => setTimeout(resolve, 600)),
       ]);
@@ -295,7 +300,7 @@ export function createPdfViewer() {
               state.currentPdfPath,
               state.currentPageNumber,
               true,
-              false
+              false,
             );
           } else {
             state.pendingRenderOptions = {
@@ -331,7 +336,7 @@ export function createPdfViewer() {
             targetPdfPath,
             state.currentPageNumber,
             true,
-            false
+            false,
           );
         }
       });
@@ -344,7 +349,9 @@ export function createPdfViewer() {
 
       if (
         (keyboardEvent.ctrlKey || keyboardEvent.metaKey) &&
-        (keyboardEvent.key === "=" || keyboardEvent.key === "+" || keyboardEvent.key === "-")
+        (keyboardEvent.key === "=" ||
+          keyboardEvent.key === "+" ||
+          keyboardEvent.key === "-")
       ) {
         keyboardEvent.preventDefault();
         let nextZoomMode = state.currentZoomMode;
@@ -355,10 +362,12 @@ export function createPdfViewer() {
         ) {
           nextZoomMode = "1";
         } else {
-          const zoomLevelScaleSteps = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+          const zoomLevelScaleSteps = [
+            0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4,
+          ];
           const currentZoomValue = parseFloat(state.currentZoomMode);
           const currentStepIndex = zoomLevelScaleSteps.findIndex(
-            (zoomStep) => Math.abs(zoomStep - currentZoomValue) < 0.01
+            (zoomStep) => Math.abs(zoomStep - currentZoomValue) < 0.01,
           );
 
           if (currentStepIndex === -1) {
@@ -390,7 +399,7 @@ export function createPdfViewer() {
               state.currentPdfPath,
               state.currentPageNumber,
               true,
-              false
+              false,
             );
           }
         }
@@ -398,7 +407,10 @@ export function createPdfViewer() {
     });
 
     window.addEventListener("contextmenu", (contextMenuEvent) => {
-      if (contextMenuEvent.target && contextMenuEvent.target.closest("#left-panel")) {
+      if (
+        contextMenuEvent.target &&
+        contextMenuEvent.target.closest("#left-panel")
+      ) {
         return;
       }
       const activeSelection = window.getSelection();
@@ -422,9 +434,18 @@ export function createPdfViewer() {
 
     if (uiElements.printBtn) {
       uiElements.printBtn.addEventListener("click", async () => {
-        if (state.currentPdfPath && state.currentPdfDocument) {
-          await renderAllPagesForPrint(state.currentFront, state.currentPdfDocument);
-          window.print();
+        if (!state.currentPdfPath || !state.currentPdfDocument) {
+          return;
+        }
+        try {
+          const printResult = await window.atarashiiApi.printPdf(
+            state.currentPdfPath,
+          );
+          if (!printResult.ok) {
+            console.error(`PDF print failure: ${printResult.error.message}`);
+          }
+        } catch (printRequestError) {
+          console.error("PDF print request failure:", printRequestError);
         }
       });
     }
