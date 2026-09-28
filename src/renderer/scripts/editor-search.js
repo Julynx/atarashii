@@ -3,7 +3,19 @@
  * Document text search controller managing match highlighting, case sensitivity, and coincidence navigation.
  */
 
-import { escapeHtml } from "./html-escape.js";
+/**
+ * Escapes characters with special meaning in HTML strings.
+ * @param {string} sourceText - Raw text to escape.
+ * @returns {string} HTML-escaped string.
+ */
+function escapeHtml(sourceText) {
+  return sourceText
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 /**
  * Creates the editor search controller.
@@ -67,8 +79,6 @@ export function createEditorSearch(textareaElement, backdropElement) {
 
   /**
    * Re-renders backdrop HTML content with highlighted search coincidences.
-   * The backdrop text is transparent, so when no coincidence is active the
-   * backdrop is cleared instead of mirroring the whole document invisibly.
    * @returns {void}
    */
   function renderBackdrop() {
@@ -76,7 +86,8 @@ export function createEditorSearch(textareaElement, backdropElement) {
     const documentContent = textareaElement.value;
 
     if (matches.length === 0 || activeMatchIndex === -1) {
-      backdropElement.innerHTML = "";
+      const trailingBreak = documentContent.endsWith("\n") ? "<br>" : "";
+      backdropElement.innerHTML = escapeHtml(documentContent) + trailingBreak;
       return;
     }
 

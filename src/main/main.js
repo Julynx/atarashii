@@ -27,8 +27,6 @@ const appConfiguration = JSON.parse(
 
 let primaryWindow = null;
 let converterServiceInstance = null;
-let applicationLogger = null;
-let isConversionStopInProgress = false;
 
 /**
  * Creates the primary application window.
@@ -63,15 +61,6 @@ function createPrimaryWindow() {
 
   windowInstance.setMenu(null);
   windowInstance.loadFile(path.join(__dirname, "..", "renderer", "index.html"));
-
-  windowInstance.on("closed", () => {
-    if (primaryWindow === windowInstance) {
-      primaryWindow = null;
-    }
-    if (process.platform !== "darwin") {
-      app.quit();
-    }
-  });
 
   windowInstance.webContents.setWindowOpenHandler(({ url }) => {
     if (
@@ -118,7 +107,7 @@ app.whenReady().then(async () => {
     "logs",
     "app.log",
   );
-  applicationLogger = createLogger(applicationLogFilePath);
+  const applicationLogger = createLogger(applicationLogFilePath);
   applicationLogger.info(`${appConfiguration.appName} starting.`);
 
   protocol.handle("safe-file", (request) => {
@@ -214,14 +203,6 @@ app.whenReady().then(async () => {
     });
   }
 
-  if (process.argv.includes("--test-quit")) {
-    primaryWindow.webContents.on("did-finish-load", () => {
-      setTimeout(() => {
-        primaryWindow.close();
-      }, 1500);
-    });
-  }
-
   if (process.argv.includes("--test-visibility")) {
     primaryWindow.webContents.on("did-finish-load", () => {
       setTimeout(async () => {
@@ -293,29 +274,10 @@ app.whenReady().then(async () => {
   });
 });
 
-app.on("before-quit", (quitEvent) => {
-  if (!converterServiceInstance) {
-    return;
+app.on("before-quit", async () => {
+  if (converterServiceInstance) {
+    await converterServiceInstance.stopLiveConversion();
   }
-
-  quitEvent.preventDefault();
-  if (isConversionStopInProgress) {
-    return;
-  }
-  isConversionStopInProgress = true;
-
-  converterServiceInstance
-    .stopLiveConversion()
-    .catch((stopError) => {
-      if (applicationLogger) {
-        applicationLogger.error(
-          `Error stopping live conversion during quit: ${stopError.message}`,
-        );
-      }
-    })
-    .finally(() => {
-      app.exit(0);
-    });
 });
 
 app.on("window-all-closed", () => {

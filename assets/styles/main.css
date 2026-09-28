@@ -962,7 +962,6 @@ html {
   bottom: 0;
   box-sizing: border-box;
   color: transparent;
-  contain: strict;
   font-family: Consolas, "Courier New", monospace;
   font-size: 13px;
   left: 0;
@@ -990,8 +989,7 @@ html {
   background-color: transparent;
   border: none;
   box-sizing: border-box;
-  caret-color: var(--lightest-gray);
-  color: transparent;
+  color: var(--lightest-gray);
   flex: 1;
   font-family: Consolas, "Courier New", monospace;
   font-size: 13px;
@@ -1009,12 +1007,7 @@ html {
   white-space: pre-wrap;
   width: 100%;
   word-break: break-word;
-  z-index: 3;
-}
-
-.code-textarea::selection {
-  background-color: rgba(77, 155, 230, 0.35);
-  color: transparent;
+  z-index: 2;
 }
 
 .code-textarea.no-wrap {

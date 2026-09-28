@@ -4,7 +4,6 @@
  */
 
 import { createEditorSearch } from "./editor-search.js";
-import { createEditorSyntax } from "./editor-syntax.js";
 import { createDocumentHistoryBuffer } from "./editor-history.js";
 
 const AUTOSAVE_DEBOUNCE_MILLISECONDS = 500;
@@ -18,9 +17,6 @@ export function createTextEditor(errorModal) {
   const textareaElement = document.getElementById("editor-textarea");
   const searchBackdropElement = document.getElementById(
     "editor-search-backdrop",
-  );
-  const syntaxBackdropElement = document.getElementById(
-    "editor-syntax-backdrop",
   );
   const lineGutterElement = document.getElementById("editor-line-gutter");
   const markdownTabButton = document.getElementById("tab-document-markdown");
@@ -59,10 +55,6 @@ export function createTextEditor(errorModal) {
   const searchController = createEditorSearch(
     textareaElement,
     searchBackdropElement,
-  );
-  const syntaxController = createEditorSyntax(
-    textareaElement,
-    syntaxBackdropElement,
   );
   const markdownHistory = createDocumentHistoryBuffer("");
   const cssHistory = createDocumentHistoryBuffer("");
@@ -105,65 +97,23 @@ export function createTextEditor(errorModal) {
   }
 
   /**
-   * Computes the exclusive line index range whose content differs between two document versions.
-   * Returns null when the line count differs, since every line may then need re-measuring.
-   * @param {string} previousContent - Document content before the edit.
-   * @param {string} updatedContent - Document content after the edit.
-   * @returns {[number, number] | null} Exclusive [start, end) changed line range or null.
-   */
-  function computeChangedLineRange(previousContent, updatedContent) {
-    if (previousContent === updatedContent) {
-      return null;
-    }
-
-    const previousLines = previousContent.split("\n");
-    const updatedLines = updatedContent.split("\n");
-    if (previousLines.length !== updatedLines.length) {
-      return null;
-    }
-
-    let rangeStart = 0;
-    while (
-      rangeStart < previousLines.length &&
-      previousLines[rangeStart] === updatedLines[rangeStart]
-    ) {
-      rangeStart += 1;
-    }
-    if (rangeStart === previousLines.length) {
-      return null;
-    }
-
-    let rangeEnd = previousLines.length - 1;
-    while (
-      rangeEnd > rangeStart &&
-      previousLines[rangeEnd] === updatedLines[rangeEnd]
-    ) {
-      rangeEnd -= 1;
-    }
-    return [rangeStart, rangeEnd + 1];
-  }
-
-  /**
-   * Measures the rendered pixel heights for an exclusive range of document lines.
+   * Computes the rendered pixel height for each document line.
    * @param {string[]} textLines - Array of string lines from the editor textarea.
    * @param {number} calculatedLineHeight - Single un-wrapped line height in pixels.
-   * @param {number} rangeStart - First measured line index (inclusive).
-   * @param {number} rangeEnd - Last measured line index (exclusive).
-   * @returns {number[]} Array with the rendered height in pixels for each measured line.
+   * @returns {number[]} Array containing the rendered height in pixels for each line.
    */
-  function measureLineRangeHeights(
-    textLines,
-    calculatedLineHeight,
-    rangeStart,
-    rangeEnd,
-  ) {
+  function measureLineHeights(textLines, calculatedLineHeight) {
+    if (!isLineWrapEnabled || textareaElement.clientWidth === 0) {
+      return new Array(textLines.length).fill(calculatedLineHeight);
+    }
+
     lineMeasurerElement.style.fontSize = `${editorFontSize}px`;
     lineMeasurerElement.style.lineHeight = `${calculatedLineHeight}px`;
     lineMeasurerElement.style.width = `${textareaElement.clientWidth}px`;
     lineMeasurerElement.style.padding = "0 14px";
 
     const fragment = document.createDocumentFragment();
-    for (let index = rangeStart; index < rangeEnd; index += 1) {
+    for (let index = 0; index < textLines.length; index += 1) {
       const lineDivision = document.createElement("div");
       lineDivision.textContent = textLines[index] || "\u200b";
       fragment.appendChild(lineDivision);
@@ -181,24 +131,6 @@ export function createTextEditor(errorModal) {
   }
 
   /**
-   * Computes the rendered pixel height for every document line.
-   * @param {string[]} textLines - Array of string lines from the editor textarea.
-   * @param {number} calculatedLineHeight - Single un-wrapped line height in pixels.
-   * @returns {number[]} Array containing the rendered height in pixels for each line.
-   */
-  function measureLineHeights(textLines, calculatedLineHeight) {
-    if (!isLineWrapEnabled || textareaElement.clientWidth === 0) {
-      return new Array(textLines.length).fill(calculatedLineHeight);
-    }
-    return measureLineRangeHeights(
-      textLines,
-      calculatedLineHeight,
-      0,
-      textLines.length,
-    );
-  }
-
-  /**
    * Applies font size and proportional line height to textarea, backdrop, and line gutter.
    * @returns {void}
    */
@@ -208,8 +140,6 @@ export function createTextEditor(errorModal) {
     textareaElement.style.lineHeight = `${calculatedLineHeight}px`;
     searchBackdropElement.style.fontSize = `${editorFontSize}px`;
     searchBackdropElement.style.lineHeight = `${calculatedLineHeight}px`;
-    syntaxBackdropElement.style.fontSize = `${editorFontSize}px`;
-    syntaxBackdropElement.style.lineHeight = `${calculatedLineHeight}px`;
     lineGutterElement.style.fontSize = `${editorFontSize}px`;
     lineGutterElement.style.lineHeight = `${calculatedLineHeight}px`;
 
@@ -226,7 +156,6 @@ export function createTextEditor(errorModal) {
       textareaElement.wrap = "on";
       textareaElement.classList.remove("no-wrap");
       searchBackdropElement.classList.remove("no-wrap");
-      syntaxBackdropElement.classList.remove("no-wrap");
       if (toggleLineWrapButton) {
         toggleLineWrapButton.classList.add("checked-item");
       }
@@ -234,7 +163,6 @@ export function createTextEditor(errorModal) {
       textareaElement.wrap = "off";
       textareaElement.classList.add("no-wrap");
       searchBackdropElement.classList.add("no-wrap");
-      syntaxBackdropElement.classList.add("no-wrap");
       if (toggleLineWrapButton) {
         toggleLineWrapButton.classList.remove("checked-item");
       }
@@ -245,19 +173,16 @@ export function createTextEditor(errorModal) {
 
   /**
    * Refreshes line numbers in the gutter with heights corresponding to wrapped lines.
-   * When a changed line range is provided and the line count is unchanged, only
-   * the affected gutter entries are re-measured and updated.
-   * @param {[number, number] | null} changedLineRange - Exclusive [start, end) range of lines edited by the last input.
    * @returns {void}
    */
-  function refreshLineNumbers(changedLineRange = null) {
+  function refreshLineNumbers() {
     const textLines = textareaElement.value.split("\n");
     const totalLines = textLines.length;
     const calculatedLineHeight = Math.round(editorFontSize * 1.54);
+    const lineHeights = measureLineHeights(textLines, calculatedLineHeight);
 
     const existingChildrenCount = lineGutterElement.children.length;
     if (existingChildrenCount !== totalLines) {
-      const lineHeights = measureLineHeights(textLines, calculatedLineHeight);
       const fragment = document.createDocumentFragment();
       for (let lineNumber = 1; lineNumber <= totalLines; lineNumber += 1) {
         const lineDiv = document.createElement("div");
@@ -267,46 +192,13 @@ export function createTextEditor(errorModal) {
         fragment.appendChild(lineDiv);
       }
       lineGutterElement.replaceChildren(fragment);
-      return;
-    }
-
-    if (
-      changedLineRange &&
-      isLineWrapEnabled &&
-      textareaElement.clientWidth !== 0
-    ) {
-      const rangeStart = Math.max(
-        0,
-        Math.min(changedLineRange[0], totalLines),
-      );
-      const rangeEnd = Math.max(
-        rangeStart,
-        Math.min(changedLineRange[1], totalLines),
-      );
-      if (rangeEnd > rangeStart) {
-        const measuredHeights = measureLineRangeHeights(
-          textLines,
-          calculatedLineHeight,
-          rangeStart,
-          rangeEnd,
-        );
-        for (let index = rangeStart; index < rangeEnd; index += 1) {
-          const lineDiv = lineGutterElement.children[index];
-          const targetHeight = `${measuredHeights[index - rangeStart]}px`;
-          if (lineDiv.style.height !== targetHeight) {
-            lineDiv.style.height = targetHeight;
-          }
+    } else {
+      for (let index = 0; index < totalLines; index += 1) {
+        const lineDiv = lineGutterElement.children[index];
+        const targetHeight = `${lineHeights[index]}px`;
+        if (lineDiv.style.height !== targetHeight) {
+          lineDiv.style.height = targetHeight;
         }
-      }
-      return;
-    }
-
-    const lineHeights = measureLineHeights(textLines, calculatedLineHeight);
-    for (let index = 0; index < totalLines; index += 1) {
-      const lineDiv = lineGutterElement.children[index];
-      const targetHeight = `${lineHeights[index]}px`;
-      if (lineDiv.style.height !== targetHeight) {
-        lineDiv.style.height = targetHeight;
       }
     }
   }
@@ -318,7 +210,6 @@ export function createTextEditor(errorModal) {
   function synchronizeScroll() {
     lineGutterElement.scrollTop = textareaElement.scrollTop;
     searchController.synchronizeScroll();
-    syntaxController.synchronizeScroll();
   }
 
   /**
@@ -369,7 +260,6 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
-    syntaxController.renderSyntax();
     updateMenuState();
     scheduleAutosave();
   }
@@ -404,7 +294,6 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
-    syntaxController.renderSyntax();
     updateMenuState();
     scheduleAutosave();
   }
@@ -512,7 +401,6 @@ export function createTextEditor(errorModal) {
         );
         updateMenuState();
         searchController.refreshSearch();
-        syntaxController.renderSyntax();
         scheduleAutosave();
       }
     } catch (formatError) {
@@ -574,7 +462,6 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
-    syntaxController.setLanguage(activeFileType);
     updateMenuState();
     textareaElement.focus();
   }
@@ -699,13 +586,6 @@ export function createTextEditor(errorModal) {
    */
   function onTextareaInput() {
     const updatedContent = textareaElement.value;
-    const previousContent =
-      activeFileType === "markdown" ? markdownBuffer : cssBuffer;
-    const changedLineRange = computeChangedLineRange(
-      previousContent,
-      updatedContent,
-    );
-
     if (activeFileType === "markdown") {
       markdownBuffer = updatedContent;
     } else {
@@ -721,9 +601,8 @@ export function createTextEditor(errorModal) {
     );
 
     updateMenuState();
-    refreshLineNumbers(changedLineRange);
+    refreshLineNumbers();
     searchController.refreshSearch();
-    syntaxController.scheduleRenderSyntax();
     scheduleAutosave();
   }
 
@@ -767,7 +646,6 @@ export function createTextEditor(errorModal) {
     textareaResizeFrameIdentifier = requestAnimationFrame(() => {
       textareaResizeFrameIdentifier = null;
       searchController.synchronizeLayout();
-      syntaxController.synchronizeLayout();
       if (isLineWrapEnabled) {
         refreshLineNumbers();
       }
@@ -815,7 +693,6 @@ export function createTextEditor(errorModal) {
 
   applyEditorFontSize();
   applyLineWrapMode();
-  syntaxController.renderSyntax();
 
   markdownTabButton.addEventListener("click", () => {
     switchTab("markdown");
@@ -861,7 +738,6 @@ export function createTextEditor(errorModal) {
       refreshLineNumbers();
       synchronizeScroll();
       searchController.refreshSearch();
-      syntaxController.setLanguage(activeFileType);
       updateMenuState();
       displaySaveIndicator("saved", "Saved");
     },
