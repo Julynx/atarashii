@@ -1,0 +1,175 @@
+/**
+ * Syntax highlighting styles for Markdown and CSS documents in Atarashii editor.
+ * Uses palette colors from color-palette.css (Resurrect-64 & Rewild-64).
+ */
+
+.editor-syntax-backdrop {
+  background-color: transparent;
+  bottom: 0;
+  box-sizing: border-box;
+  color: var(--lightest-gray);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  left: 0;
+  line-height: 20px;
+  margin: 0;
+  overflow: hidden;
+  padding: 12px 14px;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  tab-size: 2;
+  top: 0;
+  user-select: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  z-index: 2;
+}
+
+.editor-syntax-backdrop.no-wrap {
+  white-space: pre !important;
+  word-break: normal !important;
+}
+
+.editor-syntax-backdrop .token.comment {
+  color: var(--gray);
+  font-style: italic;
+}
+
+.editor-syntax-backdrop .token.punctuation {
+  color: var(--light-gray);
+}
+
+.editor-syntax-backdrop .token.heading {
+  color: var(--lighter-orange);
+  font-weight: 600;
+}
+
+.editor-syntax-backdrop .token.bold {
+  color: var(--white);
+  font-weight: 700;
+}
+
+.editor-syntax-backdrop .token.italic {
+  color: var(--lighter-green);
+  font-style: italic;
+}
+
+.editor-syntax-backdrop .token.blockquote {
+  color: var(--light-purple);
+  font-style: italic;
+}
+
+.editor-syntax-backdrop .token.code-block,
+.editor-syntax-backdrop .token.code-inline {
+  background-color: rgba(143, 211, 255, 0.08);
+  border-radius: 3px;
+  color: var(--lighter-blue);
+}
+
+.editor-syntax-backdrop .token.list,
+.editor-syntax-backdrop .token.list .token.punctuation {
+  color: var(--lighter-blue);
+  font-weight: 600;
+}
+
+.editor-syntax-backdrop .token.task-list,
+.editor-syntax-backdrop .token.task-list .token.punctuation {
+  color: var(--lighter-blue);
+  font-weight: 600;
+}
+
+.editor-syntax-backdrop .token.task-list .token.checked {
+  color: var(--lighter-green);
+  font-weight: 700;
+}
+
+.editor-syntax-backdrop .token.math {
+  color: var(--lighter-green);
+  font-style: italic;
+}
+
+.editor-syntax-backdrop .token.link {
+  color: var(--light-blue);
+}
+
+.editor-syntax-backdrop .token.link .token.url {
+  color: var(--lighter-blue);
+  text-decoration: underline;
+}
+
+.editor-syntax-backdrop .token.horizontal-rule {
+  color: var(--dark-orange);
+  font-weight: 700;
+}
+
+.editor-syntax-backdrop .token.selector {
+  color: var(--lighter-orange);
+}
+
+.editor-syntax-backdrop .token.property {
+  color: var(--lighter-blue);
+}
+
+.editor-syntax-backdrop .token.number {
+  color: var(--lighter-green);
+}
+
+.editor-syntax-backdrop .token.string {
+  color: var(--lighter-green);
+}
+
+.editor-syntax-backdrop .token.function,
+.editor-syntax-backdrop .token.url {
+  color: var(--light-orange);
+}
+
+.editor-syntax-backdrop .token.atrule {
+  color: var(--lighter-purple);
+}
+
+.editor-syntax-backdrop .token.important {
+  color: var(--dark-orange);
+  font-weight: 700;
+}
+
+.editor-syntax-backdrop .token.keyword {
+  color: var(--lighter-orange);
+  font-weight: 600;
+}
+
+.editor-syntax-backdrop .token.boolean {
+  color: var(--light-orange);
+  font-weight: 600;
+}
+
+.editor-syntax-backdrop .token.builtin {
+  color: var(--lighter-purple);
+}
+
+.editor-syntax-backdrop .token.decorator {
+  color: var(--lighter-purple);
+  font-style: italic;
+}
+
+.editor-syntax-backdrop .token.operator {
+  color: var(--light-gray);
+}
+
+.editor-syntax-backdrop .token.variable {
+  color: var(--lighter-blue);
+}
+
+.editor-syntax-backdrop .token.language-tag {
+  color: var(--gray);
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.editor-syntax-backdrop .token.attr-name {
+  color: var(--lighter-blue);
+}
+
+.editor-syntax-backdrop .token.attr-value {
+  color: var(--lighter-green);
+}

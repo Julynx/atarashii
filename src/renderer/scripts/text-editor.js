@@ -5,6 +5,7 @@
 
 import { createEditorSearch } from "./editor-search.js";
 import { createDocumentHistoryBuffer } from "./editor-history.js";
+import { createSyntaxHighlighter } from "./syntax-highlighter.js";
 
 const AUTOSAVE_DEBOUNCE_MILLISECONDS = 500;
 
@@ -17,6 +18,9 @@ export function createTextEditor(errorModal) {
   const textareaElement = document.getElementById("editor-textarea");
   const searchBackdropElement = document.getElementById(
     "editor-search-backdrop",
+  );
+  const syntaxBackdropElement = document.getElementById(
+    "editor-syntax-backdrop",
   );
   const lineGutterElement = document.getElementById("editor-line-gutter");
   const markdownTabButton = document.getElementById("tab-document-markdown");
@@ -55,6 +59,10 @@ export function createTextEditor(errorModal) {
   const searchController = createEditorSearch(
     textareaElement,
     searchBackdropElement,
+  );
+  const syntaxHighlighter = createSyntaxHighlighter(
+    textareaElement,
+    syntaxBackdropElement,
   );
   const markdownHistory = createDocumentHistoryBuffer("");
   const cssHistory = createDocumentHistoryBuffer("");
@@ -144,6 +152,7 @@ export function createTextEditor(errorModal) {
     lineGutterElement.style.lineHeight = `${calculatedLineHeight}px`;
 
     searchController.synchronizeLayout();
+    syntaxHighlighter.applyFontSize(editorFontSize, calculatedLineHeight);
     refreshLineNumbers();
   }
 
@@ -167,6 +176,7 @@ export function createTextEditor(errorModal) {
         toggleLineWrapButton.classList.remove("checked-item");
       }
     }
+    syntaxHighlighter.applyLineWrap(isLineWrapEnabled);
     searchController.synchronizeLayout();
     refreshLineNumbers();
   }
@@ -210,6 +220,7 @@ export function createTextEditor(errorModal) {
   function synchronizeScroll() {
     lineGutterElement.scrollTop = textareaElement.scrollTop;
     searchController.synchronizeScroll();
+    syntaxHighlighter.synchronizeScroll();
   }
 
   /**
@@ -260,6 +271,7 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
+    syntaxHighlighter.updateHighlight(activeFileType);
     updateMenuState();
     scheduleAutosave();
   }
@@ -294,6 +306,7 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
+    syntaxHighlighter.updateHighlight(activeFileType);
     updateMenuState();
     scheduleAutosave();
   }
@@ -401,6 +414,7 @@ export function createTextEditor(errorModal) {
         );
         updateMenuState();
         searchController.refreshSearch();
+        syntaxHighlighter.updateHighlight(activeFileType);
         scheduleAutosave();
       }
     } catch (formatError) {
@@ -462,6 +476,7 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
+    syntaxHighlighter.setLanguage(activeFileType);
     updateMenuState();
     textareaElement.focus();
   }
@@ -603,6 +618,7 @@ export function createTextEditor(errorModal) {
     updateMenuState();
     refreshLineNumbers();
     searchController.refreshSearch();
+    syntaxHighlighter.updateHighlight(activeFileType);
     scheduleAutosave();
   }
 
@@ -646,6 +662,7 @@ export function createTextEditor(errorModal) {
     textareaResizeFrameIdentifier = requestAnimationFrame(() => {
       textareaResizeFrameIdentifier = null;
       searchController.synchronizeLayout();
+      syntaxHighlighter.synchronizeLayout();
       if (isLineWrapEnabled) {
         refreshLineNumbers();
       }
@@ -738,10 +755,12 @@ export function createTextEditor(errorModal) {
       refreshLineNumbers();
       synchronizeScroll();
       searchController.refreshSearch();
+      syntaxHighlighter.setLanguage("markdown");
       updateMenuState();
       displaySaveIndicator("saved", "Saved");
     },
     flushPendingSave,
     formatDocument: formatActiveDocument,
+    syntaxHighlighter,
   };
 }

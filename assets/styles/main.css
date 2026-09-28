@@ -989,7 +989,8 @@ html {
   background-color: transparent;
   border: none;
   box-sizing: border-box;
-  color: var(--lightest-gray);
+  caret-color: var(--lightest-gray);
+  color: transparent;
   flex: 1;
   font-family: Consolas, "Courier New", monospace;
   font-size: 13px;
@@ -1007,7 +1008,12 @@ html {
   white-space: pre-wrap;
   width: 100%;
   word-break: break-word;
-  z-index: 2;
+  z-index: 3;
+}
+
+.code-textarea::selection {
+  background-color: rgba(77, 155, 230, 0.35);
+  color: transparent;
 }
 
 .code-textarea.no-wrap {
