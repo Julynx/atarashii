@@ -56,10 +56,14 @@ export function createMainScreen(screenManager, errorModal) {
       leftPanelElement.classList.remove("panel-collapsed");
       leftArrowIcon.src = "../../assets/icons/arrow-left.svg";
       leftCollapseButton.title = "Collapse left panel";
+      leftCollapseButton.setAttribute("aria-label", "Collapse left panel");
+      leftCollapseButton.setAttribute("aria-expanded", "true");
     } else {
       leftPanelElement.classList.add("panel-collapsed");
       leftArrowIcon.src = "../../assets/icons/arrow-right.svg";
       leftCollapseButton.title = "Expand left panel";
+      leftCollapseButton.setAttribute("aria-label", "Expand left panel");
+      leftCollapseButton.setAttribute("aria-expanded", "false");
     }
   }
 
@@ -74,10 +78,14 @@ export function createMainScreen(screenManager, errorModal) {
       rightPanelElement.classList.remove("panel-collapsed");
       rightArrowIcon.src = "../../assets/icons/arrow-right.svg";
       rightCollapseButton.title = "Collapse right panel";
+      rightCollapseButton.setAttribute("aria-label", "Collapse right panel");
+      rightCollapseButton.setAttribute("aria-expanded", "true");
     } else {
       rightPanelElement.classList.add("panel-collapsed");
       rightArrowIcon.src = "../../assets/icons/arrow-left.svg";
       rightCollapseButton.title = "Expand right panel";
+      rightCollapseButton.setAttribute("aria-label", "Expand right panel");
+      rightCollapseButton.setAttribute("aria-expanded", "false");
     }
   }
 
@@ -127,6 +135,12 @@ export function createMainScreen(screenManager, errorModal) {
     rightPanelElement.classList.remove("panel-collapsed");
     leftArrowIcon.src = "../../assets/icons/arrow-left.svg";
     rightArrowIcon.src = "../../assets/icons/arrow-right.svg";
+    leftCollapseButton.title = "Collapse left panel";
+    leftCollapseButton.setAttribute("aria-label", "Collapse left panel");
+    leftCollapseButton.setAttribute("aria-expanded", "true");
+    rightCollapseButton.title = "Collapse right panel";
+    rightCollapseButton.setAttribute("aria-label", "Collapse right panel");
+    rightCollapseButton.setAttribute("aria-expanded", "true");
 
     switchRightPanelTab("pdf");
 

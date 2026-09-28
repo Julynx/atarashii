@@ -858,15 +858,15 @@ html {
 }
 
 .panel-toggle-handle {
-  display: none;
   align-items: center;
   background-color: var(--darker-gray);
   border: 1px solid var(--dark-gray);
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px var(--black);
   color: var(--light-gray);
   cursor: pointer;
-  height: 40px;
+  display: flex;
+  height: 32px;
   justify-content: center;
   position: absolute;
   top: 50%;
@@ -890,11 +890,11 @@ html {
 }
 
 .panel-toggle-handle.collapse-to-left {
-  right: -13px;
+  right: 6px;
 }
 
 .panel-toggle-handle.collapse-to-right {
-  left: -13px;
+  left: 6px;
 }
 
 #left-panel.panel-collapsed .panel-toggle-handle.collapse-to-left {
