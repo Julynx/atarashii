@@ -70,8 +70,7 @@ function registerIpcHandlers(
     }
   });
 
-  ipcMain.handle("window:close", async () => {
-    await converterService.stopLiveConversion();
+  ipcMain.handle("window:close", () => {
     mainWindow.close();
   });
 

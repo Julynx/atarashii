@@ -33,8 +33,13 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
    */
   function killProcessTree(processIdentifier) {
     return new Promise((resolve) => {
+      const terminationTimeoutIdentifier = setTimeout(() => {
+        resolve();
+      }, 5000);
+
       if (process.platform === "win32") {
         exec(`taskkill /pid ${processIdentifier} /t /f`, () => {
+          clearTimeout(terminationTimeoutIdentifier);
           resolve();
         });
       } else {
@@ -44,13 +49,43 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
           try {
             process.kill(processIdentifier, "SIGKILL");
           } catch {
+            clearTimeout(terminationTimeoutIdentifier);
             resolve();
             return;
           }
         }
+        clearTimeout(terminationTimeoutIdentifier);
         resolve();
       }
     });
+  }
+
+  /**
+   * Forcibly terminates the running conversion process tree synchronously on emergency exit.
+   * @returns {void}
+   */
+  function terminateActiveProcessSynchronously() {
+    if (!activeProcess || !activeProcess.pid) {
+      return;
+    }
+    const processIdentifier = activeProcess.pid;
+    activeProcess = null;
+    if (process.platform === "win32") {
+      try {
+        const { execSync } = require("child_process");
+        execSync(`taskkill /pid ${processIdentifier} /t /f`, {
+          stdio: "ignore",
+        });
+      } catch {}
+    } else {
+      try {
+        process.kill(-processIdentifier, "SIGKILL");
+      } catch {
+        try {
+          process.kill(processIdentifier, "SIGKILL");
+        } catch {}
+      }
+    }
   }
 
   /**
@@ -99,6 +134,8 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
       detached: process.platform !== "win32",
     });
 
+    process.on("exit", terminateActiveProcessSynchronously);
+
     activeProcess.stdout.on("data", (chunk) => {
       const text = chunk.toString("utf8");
       if (logFileDescriptor) {
@@ -133,6 +170,7 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
       broadcastLogEvent(exitText);
 
       activeProcess = null;
+      process.removeListener("exit", terminateActiveProcessSynchronously);
 
       if (!isIntentionallyStopped && activeProjectPath) {
         const restartNotice = "[Atarashii] Live conversion process exited unexpectedly. Restarting in 1 second...\n";
@@ -179,6 +217,8 @@ function createConverterService(logger, broadcastLogEvent, broadcastPdfUpdatedEv
       logger.info(`Terminating conversion process tree with PID: ${targetPid}`);
       await killProcessTree(targetPid);
     }
+
+    process.removeListener("exit", terminateActiveProcessSynchronously);
 
     activeProjectPath = null;
     activeMarkdownFileName = null;

@@ -41,7 +41,7 @@ function raceAgainstLoadTimeout(loadPromise) {
 /**
  * Creates the PDF printing service.
  * @param {{info: Function, warn: Function, error: Function}} logger - Logging service.
- * @returns {{ensurePrintWindow: Function, printPdf: Function}} Print service instance.
+ * @returns {{ensurePrintWindow: Function, printPdf: Function, destroyPrintWindow: Function}} Print service instance.
  */
 function createPrintService(logger) {
   let printWindow = null;
@@ -135,7 +135,18 @@ function createPrintService(logger) {
     }
   }
 
-  return { ensurePrintWindow, printPdf };
+  /**
+   * Destroys the reusable hidden print window when shutting down the application.
+   * @returns {void}
+   */
+  function destroyPrintWindow() {
+    if (printWindow && !printWindow.isDestroyed()) {
+      printWindow.destroy();
+      printWindow = null;
+    }
+  }
+
+  return { ensurePrintWindow, printPdf, destroyPrintWindow };
 }
 
 module.exports = { createPrintService };

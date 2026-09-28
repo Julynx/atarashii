@@ -27,6 +27,7 @@ const appConfiguration = JSON.parse(
 
 let primaryWindow = null;
 let converterServiceInstance = null;
+let printServiceInstance = null;
 
 /**
  * Creates the primary application window.
@@ -158,7 +159,7 @@ app.whenReady().then(async () => {
   );
 
   primaryWindow = createPrimaryWindow();
-  const printServiceInstance = createPrintService(applicationLogger);
+  printServiceInstance = createPrintService(applicationLogger);
   printServiceInstance.ensurePrintWindow();
   registerIpcHandlers(
     primaryWindow,
@@ -167,6 +168,35 @@ app.whenReady().then(async () => {
     converterServiceInstance,
     printServiceInstance,
   );
+
+  let isApplicationTerminating = false;
+
+  primaryWindow.on("close", async (closeEvent) => {
+    if (isApplicationTerminating) {
+      return;
+    }
+    closeEvent.preventDefault();
+    isApplicationTerminating = true;
+
+    try {
+      if (converterServiceInstance) {
+        await converterServiceInstance.stopLiveConversion();
+      }
+    } catch (converterShutdownError) {
+      applicationLogger.error(
+        `Failed to stop converter during application shutdown: ${converterShutdownError.message}`,
+      );
+    }
+
+    if (printServiceInstance) {
+      printServiceInstance.destroyPrintWindow();
+    }
+
+    if (!primaryWindow.isDestroyed()) {
+      primaryWindow.destroy();
+    }
+    app.quit();
+  });
 
   primaryWindow.webContents.on("console-message", (event) => {
     applicationLogger.info(
@@ -200,6 +230,14 @@ app.whenReady().then(async () => {
       setTimeout(() => {
         app.exit(0);
       }, 2000);
+    });
+  }
+
+  if (process.argv.includes("--test-close-window")) {
+    primaryWindow.webContents.on("did-finish-load", () => {
+      setTimeout(() => {
+        primaryWindow.close();
+      }, 500);
     });
   }
 
@@ -274,14 +312,30 @@ app.whenReady().then(async () => {
   });
 });
 
-app.on("before-quit", async () => {
-  if (converterServiceInstance) {
-    await converterServiceInstance.stopLiveConversion();
+app.on("before-quit", () => {
+  if (printServiceInstance) {
+    printServiceInstance.destroyPrintWindow();
   }
 });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+
+process.on("SIGINT", () => {
+  if (primaryWindow && !primaryWindow.isDestroyed()) {
+    primaryWindow.close();
+  } else {
+    app.quit();
+  }
+});
+
+process.on("SIGTERM", () => {
+  if (primaryWindow && !primaryWindow.isDestroyed()) {
+    primaryWindow.close();
+  } else {
     app.quit();
   }
 });
