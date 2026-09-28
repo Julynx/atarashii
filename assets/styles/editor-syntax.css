@@ -1,0 +1,143 @@
+.editor-syntax-backdrop {
+  bottom: 0;
+  box-sizing: border-box;
+  color: var(--lightest-gray);
+  contain: strict;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  left: 0;
+  line-height: 20px;
+  margin: 0;
+  overflow: hidden;
+  padding: 12px 14px;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  tab-size: 2;
+  top: 0;
+  user-select: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  z-index: 2;
+}
+
+.editor-syntax-backdrop.no-wrap {
+  white-space: pre !important;
+  word-break: normal !important;
+}
+
+.editor-syntax-backdrop .token.comment,
+.editor-syntax-backdrop .token.prolog,
+.editor-syntax-backdrop .token.doctype,
+.editor-syntax-backdrop .token.cdata {
+  color: var(--gray);
+  font-style: italic;
+}
+
+.editor-syntax-backdrop .token.punctuation {
+  color: var(--gray);
+}
+
+.editor-syntax-backdrop .token.selector,
+.editor-syntax-backdrop .token.tag {
+  color: var(--light-orange);
+}
+
+.editor-syntax-backdrop .token.property,
+.editor-syntax-backdrop .token.attr-name {
+  color: var(--light-blue);
+}
+
+.editor-syntax-backdrop .token.string,
+.editor-syntax-backdrop .token.attr-value {
+  color: var(--lighter-green);
+}
+
+.editor-syntax-backdrop .token.number,
+.editor-syntax-backdrop .token.unit,
+.editor-syntax-backdrop .token.hexcode,
+.editor-syntax-backdrop .token.color {
+  color: var(--lighter-orange);
+}
+
+.editor-syntax-backdrop .token.function,
+.editor-syntax-backdrop .token.builtin,
+.editor-syntax-backdrop .token.class-name {
+  color: var(--lighter-blue);
+}
+
+.editor-syntax-backdrop .token.atrule {
+  color: var(--lighter-purple);
+}
+
+.editor-syntax-backdrop .token.keyword {
+  color: var(--lighter-red);
+}
+
+.editor-syntax-backdrop .token.important {
+  color: var(--lighter-red);
+  font-weight: 700;
+}
+
+.editor-syntax-backdrop .token.operator {
+  color: var(--light-gray);
+}
+
+.editor-syntax-backdrop .token.entity {
+  color: var(--lighter-red);
+}
+
+.editor-syntax-backdrop .token.title {
+  color: var(--light-orange);
+  font-weight: 700;
+}
+
+.editor-syntax-backdrop .token.title .token.punctuation {
+  color: var(--dark-orange);
+}
+
+.editor-syntax-backdrop .token.bold {
+  color: var(--lighter-orange);
+  font-weight: 700;
+}
+
+.editor-syntax-backdrop .token.italic {
+  color: var(--lighter-orange);
+  font-style: italic;
+}
+
+.editor-syntax-backdrop .token.strike {
+  color: var(--light-gray);
+  text-decoration: line-through;
+}
+
+.editor-syntax-backdrop .token.list {
+  color: var(--lighter-purple);
+}
+
+.editor-syntax-backdrop .token.code,
+.editor-syntax-backdrop .token.code-snippet {
+  color: var(--lighter-green);
+}
+
+.editor-syntax-backdrop .token.code-language {
+  color: var(--gray);
+}
+
+.editor-syntax-backdrop .token.front-matter {
+  color: var(--gray);
+}
+
+.editor-syntax-backdrop .token.url,
+.editor-syntax-backdrop .token.url-reference {
+  color: var(--light-blue);
+}
+
+.editor-syntax-backdrop .token.url .token.url {
+  color: var(--lighter-blue);
+}
+
+.editor-syntax-backdrop .token.table-header {
+  color: var(--lighter-orange);
+  font-weight: 700;
+}
