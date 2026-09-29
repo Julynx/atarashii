@@ -218,6 +218,11 @@ export function createEditorToc(
    * @returns {void}
    */
   function openDialog() {
+    if (tocDebounceTimer !== null) {
+      clearTimeout(tocDebounceTimer);
+      tocDebounceTimer = null;
+    }
+
     if (searchController && typeof searchController.closeDialog === "function") {
       searchController.closeDialog();
     }
@@ -232,6 +237,11 @@ export function createEditorToc(
    * @returns {void}
    */
   function closeDialog() {
+    if (tocDebounceTimer !== null) {
+      clearTimeout(tocDebounceTimer);
+      tocDebounceTimer = null;
+    }
+
     tocDialog.hidden = true;
     toggleButton.classList.remove("active");
   }
@@ -260,14 +270,28 @@ export function createEditorToc(
     }
   }
 
+  const TOC_DEBOUNCE_DELAY_MS = 200;
+  let tocDebounceTimer = null;
+
   /**
    * Refreshes table of contents dynamically when the dialog is currently open.
    * @returns {void}
    */
   function refreshIfOpen() {
-    if (!tocDialog.hidden) {
-      renderHeadingsList();
+    if (tocDialog.hidden) {
+      return;
     }
+
+    if (tocDebounceTimer !== null) {
+      clearTimeout(tocDebounceTimer);
+    }
+
+    tocDebounceTimer = setTimeout(() => {
+      tocDebounceTimer = null;
+      if (!tocDialog.hidden) {
+        renderHeadingsList();
+      }
+    }, TOC_DEBOUNCE_DELAY_MS);
   }
 
   toggleButton.addEventListener("click", toggleDialog);

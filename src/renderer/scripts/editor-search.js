@@ -88,14 +88,15 @@ export function createEditorSearch(
    */
   function renderBackdrop() {
     synchronizeLayout();
-    const documentContent = textareaElement.value;
 
-    if (matches.length === 0 || activeMatchIndex === -1) {
-      const trailingBreak = documentContent.endsWith("\n") ? "<br>" : "";
-      backdropElement.innerHTML = escapeHtml(documentContent) + trailingBreak;
+    if (searchDialog.hidden || matches.length === 0 || activeMatchIndex === -1) {
+      if (backdropElement.childNodes.length > 0) {
+        backdropElement.replaceChildren();
+      }
       return;
     }
 
+    const documentContent = textareaElement.value;
     let assembledHtml = "";
     let cursorIndex = 0;
 
@@ -104,7 +105,9 @@ export function createEditorSearch(
       const leadingSlice = documentContent.substring(cursorIndex, match.start);
       const matchedSlice = documentContent.substring(match.start, match.end);
       const isActive = index === activeMatchIndex;
-      const highlightClass = isActive ? "search-highlight active-highlight" : "search-highlight";
+      const highlightClass = isActive
+        ? "search-highlight active-highlight"
+        : "search-highlight";
 
       assembledHtml += escapeHtml(leadingSlice);
       assembledHtml += `<mark class="${highlightClass}">${escapeHtml(matchedSlice)}</mark>`;
@@ -317,8 +320,8 @@ export function createEditorSearch(
     refreshSearch() {
       if (!searchDialog.hidden) {
         executeSearch();
-      } else {
-        renderBackdrop();
+      } else if (backdropElement.childNodes.length > 0) {
+        backdropElement.replaceChildren();
       }
     },
     synchronizeScroll,
