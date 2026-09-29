@@ -5,10 +5,6 @@
 
 import { Prism, escapeHtml } from "../../../assets/vendor/prism.mjs";
 
-const MAXIMUM_HIGHLIGHTABLE_CHARACTER_COUNT = 100000;
-const LARGE_DOCUMENT_HIGHLIGHT_THRESHOLD = 20000;
-const HIGHLIGHT_DEBOUNCE_DELAY_MS = 16;
-
 /**
  * Creates the syntax highlighter controller.
  * @param {HTMLTextAreaElement} textareaElement - Editor textarea element.
@@ -48,12 +44,6 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
   function renderSyntaxHtml(sourceText, language) {
     if (sourceText.length === 0) {
       return "";
-    }
-
-    if (sourceText.length > MAXIMUM_HIGHLIGHTABLE_CHARACTER_COUNT) {
-      const escapedText = escapeHtml(sourceText);
-      const trailingBreak = sourceText.endsWith("\n") ? "<br>" : "";
-      return escapedText + trailingBreak;
     }
 
     const targetGrammar = Prism.languages[language];
@@ -96,7 +86,7 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
   }
 
   /**
-   * Schedules syntax highlighting update with debouncing for large documents.
+   * Schedules a syntax highlighting update coalesced on the next event loop tick.
    * @param {"markdown" | "css"} [language] - Optional language override.
    * @returns {void}
    */
@@ -108,19 +98,12 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
 
     if (renderDebounceTimer !== null) {
       clearTimeout(renderDebounceTimer);
-      renderDebounceTimer = null;
-    }
-
-    const currentText = textareaElement.value;
-    if (currentText.length < LARGE_DOCUMENT_HIGHLIGHT_THRESHOLD) {
-      executeRender();
-      return;
     }
 
     renderDebounceTimer = setTimeout(() => {
       renderDebounceTimer = null;
       executeRender();
-    }, HIGHLIGHT_DEBOUNCE_DELAY_MS);
+    }, 0);
   }
 
   /**

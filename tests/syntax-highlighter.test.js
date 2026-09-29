@@ -347,7 +347,7 @@ describe("Syntax Highlighter Controller", () => {
     assert.ok(mockBackdrop.innerHTML.endsWith("<br>"));
   });
 
-  it("bypasses expensive grammar tokenization for exceptionally large documents", async () => {
+  it("preserves plain text without token spans when no grammar rules match in large documents", async () => {
     const { createSyntaxHighlighter } = await import(
       "../src/renderer/scripts/syntax-highlighter.js"
     );
@@ -377,6 +377,39 @@ describe("Syntax Highlighter Controller", () => {
 
     assert.equal(mockBackdrop.innerHTML.includes('<span class="token'), false);
     assert.equal(mockBackdrop.innerHTML.length, 120000);
+  });
+
+  it("highlights syntax in exceptionally large documents with high performance", async () => {
+    const { createSyntaxHighlighter } = await import(
+      "../src/renderer/scripts/syntax-highlighter.js"
+    );
+
+    const largeDocumentWithTokens = "# Primary Heading\n\n" + "Paragraph text. **bold** and *italic*.\n".repeat(3000);
+    const mockTextarea = {
+      value: largeDocumentWithTokens,
+      offsetWidth: 300,
+      clientWidth: 300,
+      scrollTop: 0,
+      scrollLeft: 0,
+    };
+
+    const mockBackdrop = {
+      innerHTML: "",
+      scrollTop: 0,
+      scrollLeft: 0,
+      style: {},
+      classList: {
+        add() {},
+        remove() {},
+      },
+    };
+
+    const controller = createSyntaxHighlighter(mockTextarea, mockBackdrop);
+    controller.flushImmediate();
+
+    assert.ok(mockBackdrop.innerHTML.includes('class="token heading"'));
+    assert.ok(mockBackdrop.innerHTML.includes('class="token bold"'));
+    assert.ok(mockBackdrop.innerHTML.includes('class="token italic"'));
   });
 });
 

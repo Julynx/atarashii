@@ -126,6 +126,11 @@ export function createTextEditor(errorModal) {
   let cachedCharWidth = 0;
   let cachedCharWidthFontSize = 0;
   let cachedTextareaClientWidth = 0;
+  let cachedModifiedStartIndex = 0;
+  let cachedModifiedEndIndex = 0;
+  let measurerConfiguredFontSize = 0;
+  let measurerConfiguredLineHeight = 0;
+  let measurerConfiguredWidth = 0;
 
   /**
    * Retrieves the textarea client width, using cached layout measurement when available.
@@ -179,28 +184,51 @@ export function createTextEditor(errorModal) {
   }
 
   /**
-   * Measures a specific subset of candidate wrapped lines in the hidden measurer container.
-   * @param {Array<{lineIndex: number, text: string}>} candidateLines - Lines requiring DOM height evaluation.
+   * Configures line measurer container styling only when layout parameters have altered.
+   * @param {number} fontSize - Desired font size in pixels.
    * @param {number} calculatedLineHeight - Default single line height in pixels.
    * @param {number} containerWidth - Viewport container width in pixels.
-   * @param {number[]} outputHeightsArray - Array to receive measured pixel heights.
+   * @returns {void}
+   */
+  function ensureMeasurerConfigured(fontSize, calculatedLineHeight, containerWidth) {
+    if (
+      measurerConfiguredFontSize === fontSize &&
+      measurerConfiguredLineHeight === calculatedLineHeight &&
+      measurerConfiguredWidth === containerWidth
+    ) {
+      return;
+    }
+
+    lineMeasurerElement.style.fontSize = `${fontSize}px`;
+    lineMeasurerElement.style.lineHeight = `${calculatedLineHeight}px`;
+    lineMeasurerElement.style.width = `${containerWidth}px`;
+    lineMeasurerElement.style.padding = "0 14px";
+    lineMeasurerElement.style.whiteSpace = "pre-wrap";
+
+    measurerConfiguredFontSize = fontSize;
+    measurerConfiguredLineHeight = calculatedLineHeight;
+    measurerConfiguredWidth = containerWidth;
+  }
+
+  /**
+   * Measures candidate lines requiring layout inspection in the hidden measurer container.
+   * @param {Array<{targetIndex: number, text: string}>} candidateLines - Line candidates.
+   * @param {number} calculatedLineHeight - Default single line height in pixels.
+   * @param {number} containerWidth - Viewport container width in pixels.
+   * @param {number[]} outputTargetArray - Array receiving computed pixel heights.
    * @returns {void}
    */
   function measureCandidateLines(
     candidateLines,
     calculatedLineHeight,
     containerWidth,
-    outputHeightsArray,
+    outputTargetArray,
   ) {
     if (candidateLines.length === 0) {
       return;
     }
 
-    lineMeasurerElement.style.fontSize = `${editorFontSize}px`;
-    lineMeasurerElement.style.lineHeight = `${calculatedLineHeight}px`;
-    lineMeasurerElement.style.width = `${containerWidth}px`;
-    lineMeasurerElement.style.padding = "0 14px";
-    lineMeasurerElement.style.whiteSpace = "pre-wrap";
+    ensureMeasurerConfigured(editorFontSize, calculatedLineHeight, containerWidth);
 
     const fragment = document.createDocumentFragment();
     for (let index = 0; index < candidateLines.length; index += 1) {
@@ -212,27 +240,30 @@ export function createTextEditor(errorModal) {
 
     const children = lineMeasurerElement.children;
     for (let index = 0; index < children.length; index += 1) {
-      const targetIndex = candidateLines[index].lineIndex;
-      outputHeightsArray[targetIndex] =
+      const targetIndex = candidateLines[index].targetIndex;
+      outputTargetArray[targetIndex] =
         children[index].offsetHeight || calculatedLineHeight;
     }
   }
 
   /**
-   * Computes the rendered pixel height for each document line using incremental measurement.
+   * Computes rendered pixel heights for text lines using incremental diffing and in-place updates.
    * @param {string[]} textLines - Array of string lines from the editor textarea.
    * @param {number} calculatedLineHeight - Single un-wrapped line height in pixels.
-   * @returns {number[]} Array containing the rendered height in pixels for each line.
+   * @returns {number[]} Array containing rendered pixel heights for each line.
    */
   function measureLineHeights(textLines, calculatedLineHeight) {
     const totalLines = textLines.length;
     const currentClientWidth = getTextareaClientWidth();
+
     if (!isLineWrapEnabled || currentClientWidth === 0) {
-      cachedPreviousLines = textLines.slice();
+      cachedPreviousLines = textLines;
       cachedMeasuredHeights = new Array(totalLines).fill(calculatedLineHeight);
       cachedMeasureClientWidth = currentClientWidth;
       cachedMeasureFontSize = editorFontSize;
       cachedMeasureLineWrap = isLineWrapEnabled;
+      cachedModifiedStartIndex = 0;
+      cachedModifiedEndIndex = totalLines - 1;
       return cachedMeasuredHeights;
     }
 
@@ -252,7 +283,7 @@ export function createTextEditor(errorModal) {
       for (let index = 0; index < totalLines; index += 1) {
         if (canLineWrap(textLines[index], charWidth, availableWidth)) {
           candidatesToMeasure.push({
-            lineIndex: index,
+            targetIndex: index,
             text: textLines[index],
           });
         }
@@ -265,11 +296,13 @@ export function createTextEditor(errorModal) {
         resultHeights,
       );
 
-      cachedPreviousLines = textLines.slice();
+      cachedPreviousLines = textLines;
       cachedMeasuredHeights = resultHeights;
       cachedMeasureClientWidth = currentClientWidth;
       cachedMeasureFontSize = editorFontSize;
       cachedMeasureLineWrap = isLineWrapEnabled;
+      cachedModifiedStartIndex = 0;
+      cachedModifiedEndIndex = totalLines - 1;
       return resultHeights;
     }
 
@@ -298,31 +331,48 @@ export function createTextEditor(errorModal) {
       newSuffixCount += 1;
     }
 
-    const nextHeights = new Array(newLength);
-
-    for (let index = 0; index < prefixCount; index += 1) {
-      nextHeights[index] = cachedMeasuredHeights[index];
-    }
-
-    for (let suffixIndex = 0; suffixIndex < newSuffixCount; suffixIndex += 1) {
-      const oldIndex = oldLength - 1 - suffixIndex;
-      const newIndex = newLength - 1 - suffixIndex;
-      nextHeights[newIndex] = cachedMeasuredHeights[oldIndex];
-    }
-
     const modifiedStartIndex = prefixCount;
     const modifiedEndIndex = newLength - 1 - newSuffixCount;
+
+    cachedModifiedStartIndex = modifiedStartIndex;
+    cachedModifiedEndIndex = modifiedEndIndex;
+
+    if (oldLength === newLength) {
+      const candidatesToMeasure = [];
+      for (let index = modifiedStartIndex; index <= modifiedEndIndex; index += 1) {
+        cachedMeasuredHeights[index] = calculatedLineHeight;
+        if (canLineWrap(textLines[index], charWidth, availableWidth)) {
+          candidatesToMeasure.push({
+            targetIndex: index,
+            text: textLines[index],
+          });
+        }
+      }
+
+      if (candidatesToMeasure.length > 0) {
+        measureCandidateLines(
+          candidatesToMeasure,
+          calculatedLineHeight,
+          currentClientWidth,
+          cachedMeasuredHeights,
+        );
+      }
+
+      cachedPreviousLines = textLines;
+      return cachedMeasuredHeights;
+    }
+
+    const modifiedCount = Math.max(0, modifiedEndIndex - modifiedStartIndex + 1);
+    const sliceHeights = new Array(modifiedCount).fill(calculatedLineHeight);
     const candidatesToMeasure = [];
 
-    for (let index = modifiedStartIndex; index <= modifiedEndIndex; index += 1) {
-      if (canLineWrap(textLines[index], charWidth, availableWidth)) {
-        nextHeights[index] = calculatedLineHeight;
+    for (let index = 0; index < modifiedCount; index += 1) {
+      const lineIndex = modifiedStartIndex + index;
+      if (canLineWrap(textLines[lineIndex], charWidth, availableWidth)) {
         candidatesToMeasure.push({
-          lineIndex: index,
-          text: textLines[index],
+          targetIndex: index,
+          text: textLines[lineIndex],
         });
-      } else {
-        nextHeights[index] = calculatedLineHeight;
       }
     }
 
@@ -331,13 +381,15 @@ export function createTextEditor(errorModal) {
         candidatesToMeasure,
         calculatedLineHeight,
         currentClientWidth,
-        nextHeights,
+        sliceHeights,
       );
     }
 
-    cachedPreviousLines = textLines.slice();
-    cachedMeasuredHeights = nextHeights;
-    return nextHeights;
+    const removedOldCount = Math.max(0, oldLength - prefixCount - oldSuffixCount);
+    cachedMeasuredHeights.splice(modifiedStartIndex, removedOldCount, ...sliceHeights);
+
+    cachedPreviousLines = textLines;
+    return cachedMeasuredHeights;
   }
 
   /**
@@ -364,6 +416,7 @@ export function createTextEditor(errorModal) {
    * @returns {void}
    */
   function applyLineWrapMode() {
+    cachedPreviousLines = null;
     cachedTextareaClientWidth = textareaElement.clientWidth;
     if (isLineWrapEnabled) {
       textareaElement.wrap = "on";
@@ -410,6 +463,22 @@ export function createTextEditor(errorModal) {
       return;
     }
 
+    if (existingChildrenCount === totalLines) {
+      const gutterChildren = lineGutterElement.children;
+      const startIndex = Math.max(0, cachedModifiedStartIndex);
+      const endIndex = Math.min(totalLines - 1, cachedModifiedEndIndex);
+      for (let index = startIndex; index <= endIndex; index += 1) {
+        const lineDiv = gutterChildren[index];
+        if (lineDiv) {
+          const targetHeight = `${lineHeights[index]}px`;
+          if (lineDiv.style.height !== targetHeight) {
+            lineDiv.style.height = targetHeight;
+          }
+        }
+      }
+      return;
+    }
+
     if (existingChildrenCount < totalLines) {
       const fragment = document.createDocumentFragment();
       for (
@@ -429,7 +498,8 @@ export function createTextEditor(errorModal) {
     }
 
     const gutterChildren = lineGutterElement.children;
-    for (let index = 0; index < totalLines; index += 1) {
+    const updateStartIndex = Math.max(0, cachedModifiedStartIndex);
+    for (let index = updateStartIndex; index < totalLines; index += 1) {
       const lineDiv = gutterChildren[index];
       const targetNumber = String(index + 1);
       if (lineDiv.textContent !== targetNumber) {
@@ -497,6 +567,7 @@ export function createTextEditor(errorModal) {
       cssBuffer = previousState.content;
     }
 
+    cachedPreviousLines = null;
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
@@ -533,6 +604,7 @@ export function createTextEditor(errorModal) {
       cssBuffer = nextState.content;
     }
 
+    cachedPreviousLines = null;
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
@@ -624,6 +696,7 @@ export function createTextEditor(errorModal) {
           cssBuffer = formattedContent;
         }
 
+        cachedPreviousLines = null;
         refreshLineNumbers();
 
         const safeSelectionStart = Math.min(
@@ -707,6 +780,7 @@ export function createTextEditor(errorModal) {
       tocController.setVisible(false);
     }
 
+    cachedPreviousLines = null;
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
