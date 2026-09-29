@@ -6,6 +6,8 @@
 import { Prism, escapeHtml } from "../../../assets/vendor/prism.mjs";
 
 const MAXIMUM_HIGHLIGHTABLE_CHARACTER_COUNT = 100000;
+const LARGE_DOCUMENT_HIGHLIGHT_THRESHOLD = 20000;
+const HIGHLIGHT_DEBOUNCE_DELAY_MS = 16;
 
 /**
  * Creates the syntax highlighter controller.
@@ -17,6 +19,7 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
   let activeLanguage = "markdown";
   let cachedSourceText = null;
   let cachedRenderedHtml = null;
+  let renderDebounceTimer = null;
 
   /**
    * Synchronizes syntax backdrop padding with textarea scrollbar presence.
@@ -93,7 +96,7 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
   }
 
   /**
-   * Updates syntax highlighting synchronously for instant response and zero typing flicker.
+   * Schedules syntax highlighting update with debouncing for large documents.
    * @param {"markdown" | "css"} [language] - Optional language override.
    * @returns {void}
    */
@@ -103,7 +106,21 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
       cachedSourceText = null;
     }
 
-    executeRender();
+    if (renderDebounceTimer !== null) {
+      clearTimeout(renderDebounceTimer);
+      renderDebounceTimer = null;
+    }
+
+    const currentText = textareaElement.value;
+    if (currentText.length < LARGE_DOCUMENT_HIGHLIGHT_THRESHOLD) {
+      executeRender();
+      return;
+    }
+
+    renderDebounceTimer = setTimeout(() => {
+      renderDebounceTimer = null;
+      executeRender();
+    }, HIGHLIGHT_DEBOUNCE_DELAY_MS);
   }
 
   /**
@@ -114,6 +131,11 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
   function setLanguage(nextLanguage) {
     if (activeLanguage === nextLanguage && cachedRenderedHtml !== null) {
       return;
+    }
+
+    if (renderDebounceTimer !== null) {
+      clearTimeout(renderDebounceTimer);
+      renderDebounceTimer = null;
     }
 
     activeLanguage = nextLanguage;
@@ -152,6 +174,10 @@ export function createSyntaxHighlighter(textareaElement, syntaxBackdropElement) 
    * @returns {void}
    */
   function flushImmediate() {
+    if (renderDebounceTimer !== null) {
+      clearTimeout(renderDebounceTimer);
+      renderDebounceTimer = null;
+    }
     executeRender();
   }
 

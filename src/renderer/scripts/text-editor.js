@@ -118,38 +118,226 @@ export function createTextEditor(errorModal) {
     }
   }
 
+  let cachedPreviousLines = null;
+  let cachedMeasuredHeights = [];
+  let cachedMeasureClientWidth = 0;
+  let cachedMeasureFontSize = 0;
+  let cachedMeasureLineWrap = true;
+  let cachedCharWidth = 0;
+  let cachedCharWidthFontSize = 0;
+  let cachedTextareaClientWidth = 0;
+
   /**
-   * Computes the rendered pixel height for each document line.
+   * Retrieves the textarea client width, using cached layout measurement when available.
+   * @returns {number} Textarea client width in pixels.
+   */
+  function getTextareaClientWidth() {
+    if (cachedTextareaClientWidth > 0) {
+      return cachedTextareaClientWidth;
+    }
+    cachedTextareaClientWidth = textareaElement.clientWidth;
+    return cachedTextareaClientWidth;
+  }
+
+  /**
+   * Calculates the monospace character width for the active editor font size.
+   * @param {number} fontSize - Active editor font size in pixels.
+   * @returns {number} Measured character width in pixels.
+   */
+  function getMonospaceCharWidth(fontSize) {
+    if (cachedCharWidth > 0 && cachedCharWidthFontSize === fontSize) {
+      return cachedCharWidth;
+    }
+    lineMeasurerElement.style.fontSize = `${fontSize}px`;
+    lineMeasurerElement.style.lineHeight = `${Math.round(fontSize * 1.54)}px`;
+    lineMeasurerElement.style.width = "auto";
+    lineMeasurerElement.style.whiteSpace = "pre";
+    lineMeasurerElement.textContent = "01234567890123456789";
+    const measuredBoundingRect = lineMeasurerElement.getBoundingClientRect();
+    cachedCharWidth =
+      measuredBoundingRect.width > 0
+        ? measuredBoundingRect.width / 20
+        : fontSize * 0.6;
+    cachedCharWidthFontSize = fontSize;
+    return cachedCharWidth;
+  }
+
+  /**
+   * Determines whether a given line of text could wrap within the container width.
+   * @param {string} lineText - Content of the line.
+   * @param {number} charWidth - Monospace character width in pixels.
+   * @param {number} availableWidth - Available text container width in pixels.
+   * @returns {boolean} True if the line can potentially wrap across multiple visual lines.
+   */
+  function canLineWrap(lineText, charWidth, availableWidth) {
+    if (!lineText || availableWidth <= 0) {
+      return false;
+    }
+    const tabCount = lineText.indexOf("\t") === -1 ? 0 : lineText.split("\t").length - 1;
+    const effectiveLength = lineText.length + tabCount * 2;
+    return effectiveLength * charWidth >= availableWidth - 14;
+  }
+
+  /**
+   * Measures a specific subset of candidate wrapped lines in the hidden measurer container.
+   * @param {Array<{lineIndex: number, text: string}>} candidateLines - Lines requiring DOM height evaluation.
+   * @param {number} calculatedLineHeight - Default single line height in pixels.
+   * @param {number} containerWidth - Viewport container width in pixels.
+   * @param {number[]} outputHeightsArray - Array to receive measured pixel heights.
+   * @returns {void}
+   */
+  function measureCandidateLines(
+    candidateLines,
+    calculatedLineHeight,
+    containerWidth,
+    outputHeightsArray,
+  ) {
+    if (candidateLines.length === 0) {
+      return;
+    }
+
+    lineMeasurerElement.style.fontSize = `${editorFontSize}px`;
+    lineMeasurerElement.style.lineHeight = `${calculatedLineHeight}px`;
+    lineMeasurerElement.style.width = `${containerWidth}px`;
+    lineMeasurerElement.style.padding = "0 14px";
+    lineMeasurerElement.style.whiteSpace = "pre-wrap";
+
+    const fragment = document.createDocumentFragment();
+    for (let index = 0; index < candidateLines.length; index += 1) {
+      const lineDivision = document.createElement("div");
+      lineDivision.textContent = candidateLines[index].text || "\u200b";
+      fragment.appendChild(lineDivision);
+    }
+    lineMeasurerElement.replaceChildren(fragment);
+
+    const children = lineMeasurerElement.children;
+    for (let index = 0; index < children.length; index += 1) {
+      const targetIndex = candidateLines[index].lineIndex;
+      outputHeightsArray[targetIndex] =
+        children[index].offsetHeight || calculatedLineHeight;
+    }
+  }
+
+  /**
+   * Computes the rendered pixel height for each document line using incremental measurement.
    * @param {string[]} textLines - Array of string lines from the editor textarea.
    * @param {number} calculatedLineHeight - Single un-wrapped line height in pixels.
    * @returns {number[]} Array containing the rendered height in pixels for each line.
    */
   function measureLineHeights(textLines, calculatedLineHeight) {
-    if (!isLineWrapEnabled || textareaElement.clientWidth === 0) {
-      return new Array(textLines.length).fill(calculatedLineHeight);
+    const totalLines = textLines.length;
+    const currentClientWidth = getTextareaClientWidth();
+    if (!isLineWrapEnabled || currentClientWidth === 0) {
+      cachedPreviousLines = textLines.slice();
+      cachedMeasuredHeights = new Array(totalLines).fill(calculatedLineHeight);
+      cachedMeasureClientWidth = currentClientWidth;
+      cachedMeasureFontSize = editorFontSize;
+      cachedMeasureLineWrap = isLineWrapEnabled;
+      return cachedMeasuredHeights;
     }
 
-    lineMeasurerElement.style.fontSize = `${editorFontSize}px`;
-    lineMeasurerElement.style.lineHeight = `${calculatedLineHeight}px`;
-    lineMeasurerElement.style.width = `${textareaElement.clientWidth}px`;
-    lineMeasurerElement.style.padding = "0 14px";
+    const availableWidth = currentClientWidth - 28;
+    const charWidth = getMonospaceCharWidth(editorFontSize);
 
-    const fragment = document.createDocumentFragment();
-    for (let index = 0; index < textLines.length; index += 1) {
-      const lineDivision = document.createElement("div");
-      lineDivision.textContent = textLines[index] || "\u200b";
-      fragment.appendChild(lineDivision);
+    const isLayoutSame =
+      cachedPreviousLines !== null &&
+      cachedMeasureClientWidth === currentClientWidth &&
+      cachedMeasureFontSize === editorFontSize &&
+      cachedMeasureLineWrap === isLineWrapEnabled;
+
+    if (!isLayoutSame) {
+      const resultHeights = new Array(totalLines).fill(calculatedLineHeight);
+      const candidatesToMeasure = [];
+
+      for (let index = 0; index < totalLines; index += 1) {
+        if (canLineWrap(textLines[index], charWidth, availableWidth)) {
+          candidatesToMeasure.push({
+            lineIndex: index,
+            text: textLines[index],
+          });
+        }
+      }
+
+      measureCandidateLines(
+        candidatesToMeasure,
+        calculatedLineHeight,
+        currentClientWidth,
+        resultHeights,
+      );
+
+      cachedPreviousLines = textLines.slice();
+      cachedMeasuredHeights = resultHeights;
+      cachedMeasureClientWidth = currentClientWidth;
+      cachedMeasureFontSize = editorFontSize;
+      cachedMeasureLineWrap = isLineWrapEnabled;
+      return resultHeights;
     }
-    lineMeasurerElement.replaceChildren(fragment);
 
-    const measuredHeights = [];
-    const children = lineMeasurerElement.children;
-    for (let index = 0; index < children.length; index += 1) {
-      measuredHeights.push(
-        children[index].offsetHeight || calculatedLineHeight,
+    const oldLines = cachedPreviousLines;
+    const oldLength = oldLines.length;
+    const newLength = totalLines;
+
+    let prefixCount = 0;
+    while (
+      prefixCount < oldLength &&
+      prefixCount < newLength &&
+      oldLines[prefixCount] === textLines[prefixCount]
+    ) {
+      prefixCount += 1;
+    }
+
+    let oldSuffixCount = 0;
+    let newSuffixCount = 0;
+    while (
+      oldLength - 1 - oldSuffixCount >= prefixCount &&
+      newLength - 1 - newSuffixCount >= prefixCount &&
+      oldLines[oldLength - 1 - oldSuffixCount] ===
+        textLines[newLength - 1 - newSuffixCount]
+    ) {
+      oldSuffixCount += 1;
+      newSuffixCount += 1;
+    }
+
+    const nextHeights = new Array(newLength);
+
+    for (let index = 0; index < prefixCount; index += 1) {
+      nextHeights[index] = cachedMeasuredHeights[index];
+    }
+
+    for (let suffixIndex = 0; suffixIndex < newSuffixCount; suffixIndex += 1) {
+      const oldIndex = oldLength - 1 - suffixIndex;
+      const newIndex = newLength - 1 - suffixIndex;
+      nextHeights[newIndex] = cachedMeasuredHeights[oldIndex];
+    }
+
+    const modifiedStartIndex = prefixCount;
+    const modifiedEndIndex = newLength - 1 - newSuffixCount;
+    const candidatesToMeasure = [];
+
+    for (let index = modifiedStartIndex; index <= modifiedEndIndex; index += 1) {
+      if (canLineWrap(textLines[index], charWidth, availableWidth)) {
+        nextHeights[index] = calculatedLineHeight;
+        candidatesToMeasure.push({
+          lineIndex: index,
+          text: textLines[index],
+        });
+      } else {
+        nextHeights[index] = calculatedLineHeight;
+      }
+    }
+
+    if (candidatesToMeasure.length > 0) {
+      measureCandidateLines(
+        candidatesToMeasure,
+        calculatedLineHeight,
+        currentClientWidth,
+        nextHeights,
       );
     }
-    return measuredHeights;
+
+    cachedPreviousLines = textLines.slice();
+    cachedMeasuredHeights = nextHeights;
+    return nextHeights;
   }
 
   /**
@@ -157,6 +345,7 @@ export function createTextEditor(errorModal) {
    * @returns {void}
    */
   function applyEditorFontSize() {
+    cachedTextareaClientWidth = textareaElement.clientWidth;
     const calculatedLineHeight = Math.round(editorFontSize * 1.54);
     textareaElement.style.fontSize = `${editorFontSize}px`;
     textareaElement.style.lineHeight = `${calculatedLineHeight}px`;
@@ -175,6 +364,7 @@ export function createTextEditor(errorModal) {
    * @returns {void}
    */
   function applyLineWrapMode() {
+    cachedTextareaClientWidth = textareaElement.clientWidth;
     if (isLineWrapEnabled) {
       textareaElement.wrap = "on";
       textareaElement.classList.remove("no-wrap");
@@ -206,7 +396,8 @@ export function createTextEditor(errorModal) {
     const lineHeights = measureLineHeights(textLines, calculatedLineHeight);
 
     const existingChildrenCount = lineGutterElement.children.length;
-    if (existingChildrenCount !== totalLines) {
+
+    if (existingChildrenCount === 0) {
       const fragment = document.createDocumentFragment();
       for (let lineNumber = 1; lineNumber <= totalLines; lineNumber += 1) {
         const lineDiv = document.createElement("div");
@@ -216,13 +407,37 @@ export function createTextEditor(errorModal) {
         fragment.appendChild(lineDiv);
       }
       lineGutterElement.replaceChildren(fragment);
-    } else {
-      for (let index = 0; index < totalLines; index += 1) {
-        const lineDiv = lineGutterElement.children[index];
-        const targetHeight = `${lineHeights[index]}px`;
-        if (lineDiv.style.height !== targetHeight) {
-          lineDiv.style.height = targetHeight;
-        }
+      return;
+    }
+
+    if (existingChildrenCount < totalLines) {
+      const fragment = document.createDocumentFragment();
+      for (
+        let lineNumber = existingChildrenCount + 1;
+        lineNumber <= totalLines;
+        lineNumber += 1
+      ) {
+        const lineDiv = document.createElement("div");
+        lineDiv.className = "editor-gutter-line";
+        fragment.appendChild(lineDiv);
+      }
+      lineGutterElement.appendChild(fragment);
+    } else if (existingChildrenCount > totalLines) {
+      while (lineGutterElement.children.length > totalLines) {
+        lineGutterElement.removeChild(lineGutterElement.lastElementChild);
+      }
+    }
+
+    const gutterChildren = lineGutterElement.children;
+    for (let index = 0; index < totalLines; index += 1) {
+      const lineDiv = gutterChildren[index];
+      const targetNumber = String(index + 1);
+      if (lineDiv.textContent !== targetNumber) {
+        lineDiv.textContent = targetNumber;
+      }
+      const targetHeight = `${lineHeights[index]}px`;
+      if (lineDiv.style.height !== targetHeight) {
+        lineDiv.style.height = targetHeight;
       }
     }
   }
@@ -681,6 +896,7 @@ export function createTextEditor(errorModal) {
     }
     textareaResizeFrameIdentifier = requestAnimationFrame(() => {
       textareaResizeFrameIdentifier = null;
+      cachedTextareaClientWidth = textareaElement.clientWidth;
       searchController.synchronizeLayout();
       syntaxHighlighter.synchronizeLayout();
       if (isLineWrapEnabled) {
@@ -772,6 +988,8 @@ export function createTextEditor(errorModal) {
       cssTabButton.classList.remove("active-tab");
 
       textareaElement.value = markdownBuffer;
+      cachedTextareaClientWidth = textareaElement.clientWidth;
+      cachedPreviousLines = null;
       refreshLineNumbers();
       synchronizeScroll();
       searchController.refreshSearch();
