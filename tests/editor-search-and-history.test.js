@@ -217,7 +217,11 @@ describe("Editor Search and History Integration", () => {
                 const isSavePreservingUnformatted = textarea.value === unformattedMarkdown;
 
                 formatMenuItem.click();
-                await new Promise((resolve) => setTimeout(resolve, 500));
+                let formatPollAttempts = 0;
+                while (formatPollAttempts < 40 && !textarea.value.includes("# Messy Title")) {
+                  await new Promise((resolve) => setTimeout(resolve, 50));
+                  formatPollAttempts += 1;
+                }
                 const contentAfterFormat = textarea.value;
                 const isFormatWorking = contentAfterFormat.includes("# Messy Title") && !contentAfterFormat.includes("   \\\\n");
 

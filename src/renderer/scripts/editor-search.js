@@ -21,9 +21,14 @@ function escapeHtml(sourceText) {
  * Creates the editor search controller.
  * @param {HTMLTextAreaElement} textareaElement - Main editor textarea.
  * @param {HTMLElement} backdropElement - Highlighting backdrop element behind textarea.
+ * @param {Function} [onOpenDialog] - Optional callback invoked when search dialog opens.
  * @returns {object} Search controller interface.
  */
-export function createEditorSearch(textareaElement, backdropElement) {
+export function createEditorSearch(
+  textareaElement,
+  backdropElement,
+  onOpenDialog,
+) {
   const toggleButton = document.getElementById("editor-search-toggle-button");
   const searchDialog = document.getElementById("editor-search-dialog");
   const searchInput = document.getElementById("editor-search-input");
@@ -226,6 +231,9 @@ export function createEditorSearch(textareaElement, backdropElement) {
    * @returns {void}
    */
   function openDialog() {
+    if (typeof onOpenDialog === "function") {
+      onOpenDialog();
+    }
     searchDialog.hidden = false;
     toggleButton.classList.add("active");
     searchInput.focus();

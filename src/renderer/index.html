@@ -285,6 +285,18 @@
                     Saved
                   </div>
                   <button
+                    id="editor-toc-toggle-button"
+                    class="editor-tool-button editor-standalone-button"
+                    title="Table of contents"
+                    aria-label="Table of contents"
+                  >
+                    <img
+                      src="../../assets/icons/toc.svg"
+                      alt=""
+                      class="editor-button-icon"
+                    />
+                  </button>
+                  <button
                     id="editor-search-toggle-button"
                     class="editor-tool-button editor-standalone-button"
                     title="Find in document"
@@ -395,6 +407,14 @@
               </div>
 
               <div class="panel-content-area">
+                <div
+                  id="editor-toc-dialog"
+                  class="editor-toc-dialog"
+                  hidden
+                >
+                  <div id="editor-toc-list" class="toc-dialog-list"></div>
+                </div>
+
                 <div
                   id="editor-search-dialog"
                   class="editor-search-dialog"

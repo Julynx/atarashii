@@ -4,6 +4,7 @@
  */
 
 import { createEditorSearch } from "./editor-search.js";
+import { createEditorToc } from "./editor-toc.js";
 import { createDocumentHistoryBuffer } from "./editor-history.js";
 import { createSyntaxHighlighter } from "./syntax-highlighter.js";
 
@@ -56,9 +57,22 @@ export function createTextEditor(errorModal) {
   lineMeasurerElement.style.boxSizing = "border-box";
   document.body.appendChild(lineMeasurerElement);
 
+  let tocController = null;
+
   const searchController = createEditorSearch(
     textareaElement,
     searchBackdropElement,
+    () => {
+      if (tocController) {
+        tocController.closeDialog();
+      }
+    },
+  );
+
+  tocController = createEditorToc(
+    textareaElement,
+    lineGutterElement,
+    searchController,
   );
   const syntaxHighlighter = createSyntaxHighlighter(
     textareaElement,
@@ -271,6 +285,7 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
+    tocController.refreshIfOpen();
     syntaxHighlighter.updateHighlight(activeFileType);
     updateMenuState();
     scheduleAutosave();
@@ -306,6 +321,7 @@ export function createTextEditor(errorModal) {
     refreshLineNumbers();
     synchronizeScroll();
     searchController.refreshSearch();
+    tocController.refreshIfOpen();
     syntaxHighlighter.updateHighlight(activeFileType);
     updateMenuState();
     scheduleAutosave();
@@ -414,6 +430,7 @@ export function createTextEditor(errorModal) {
         );
         updateMenuState();
         searchController.refreshSearch();
+        tocController.refreshIfOpen();
         syntaxHighlighter.updateHighlight(activeFileType);
         scheduleAutosave();
       }
@@ -467,10 +484,12 @@ export function createTextEditor(errorModal) {
       markdownTabButton.classList.add("active-tab");
       cssTabButton.classList.remove("active-tab");
       textareaElement.value = markdownBuffer;
+      tocController.setVisible(true);
     } else {
       cssTabButton.classList.add("active-tab");
       markdownTabButton.classList.remove("active-tab");
       textareaElement.value = cssBuffer;
+      tocController.setVisible(false);
     }
 
     refreshLineNumbers();
@@ -618,6 +637,7 @@ export function createTextEditor(errorModal) {
     updateMenuState();
     refreshLineNumbers();
     searchController.refreshSearch();
+    tocController.refreshIfOpen();
     syntaxHighlighter.updateHighlight(activeFileType);
     scheduleAutosave();
   }
@@ -755,6 +775,7 @@ export function createTextEditor(errorModal) {
       refreshLineNumbers();
       synchronizeScroll();
       searchController.refreshSearch();
+      tocController.setVisible(true);
       syntaxHighlighter.setLanguage("markdown");
       updateMenuState();
       displaySaveIndicator("saved", "Saved");
@@ -762,5 +783,6 @@ export function createTextEditor(errorModal) {
     flushPendingSave,
     formatDocument: formatActiveDocument,
     syntaxHighlighter,
+    tocController,
   };
 }
